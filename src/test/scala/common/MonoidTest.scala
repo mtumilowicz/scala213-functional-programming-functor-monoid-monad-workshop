@@ -80,4 +80,42 @@ class MonoidTest extends org.scalatest.FunSuite with org.scalatest.matchers.shou
     foldMap(List("a", "bb", "ccc"), intSum)(_.length) shouldBe 6
   }
 
+  test("foldRight") {
+    def foldMap[A, B](as: List[A], m: Monoid[B])(f: A => B): B =
+      as.map(f).fold(m.zero)(m.op)
+
+    def endoMonoid[A]: Monoid[A => A] = new Monoid[A => A] {
+      override def op(a1: A => A, a2: A => A): A => A = a1 compose a2
+
+      override def zero: A => A = a => a
+    }
+
+    def foldRight[A, B](as: List[A])(z: B)(f: (A, B) => B): B =
+      foldMap(as, endoMonoid[B])(f.curried)(z)
+
+    foldRight(List(1, 2, 3))("")(_ + _) shouldBe List(1, 2, 3).foldRight("")(_ + _)
+  }
+
+  test("functionMonoid") {
+    def functionMonoid[A, B](B: Monoid[B]): Monoid[A => B] = new Monoid[A => B] {
+      override def op(a1: A => B, a2: A => B): A => B = a => B.op(a1(a), a2(a))
+
+      override def zero: A => B = _ => B.zero
+    }
+  }
+
+  test("bagMonoid") {
+    def merge[K, V](m1: Map[K, V], m2: Map[K, V])(combine: (V, V) => V): Map[K, V] = {
+      val entries = m1.toSeq ++ m2.toSeq
+      entries.groupMapReduce(_._1)(_._2)(combine)
+    }
+
+    def mapMergeMonoid[K, V](V: Monoid[V]): Monoid[Map[K, V]] =
+      new Monoid[Map[K, V]] {
+        def zero: Map[K, V] = Map[K, V]()
+
+        def op(a: Map[K, V], b: Map[K, V]): Map[K, V] = merge(a, b)(V.op)
+      }
+  }
+
 }
