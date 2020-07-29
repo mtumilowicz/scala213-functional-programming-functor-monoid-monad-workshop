@@ -1,9 +1,11 @@
 package common
 
-class MonoidTest extends org.scalatest.FunSuite
+import org.scalatest._
+
+class MonoidTest extends propspec.AnyPropSpec
   with org.scalatest.matchers.should.Matchers {
 
-  test("ListConcat") {
+  property("ListConcat") {
     def ListConcat[A]: Monoid[List[A]] = new Monoid[List[A]] {
       def op(a1: List[A], a2: List[A]): List[A] = a1 ++ a2
 
@@ -18,7 +20,7 @@ class MonoidTest extends org.scalatest.FunSuite
     listConcat.zero shouldBe Nil
   }
 
-  test("IntSum") {
+  property("IntSum") {
     def IntSum: Monoid[Int] = new Monoid[Int] {
       override def op(a1: Int, a2: Int): Int = a1 + a2
 
@@ -33,7 +35,7 @@ class MonoidTest extends org.scalatest.FunSuite
     intSum.zero shouldBe 0
   }
 
-  test("IntMultiplication") {
+  property("IntMultiplication") {
     def IntMultiplication: Monoid[Int] = new Monoid[Int] {
       override def op(a1: Int, a2: Int): Int = a1 * a2
 
@@ -47,4 +49,5 @@ class MonoidTest extends org.scalatest.FunSuite
     intMultiplication.op(2, intMultiplication.zero) shouldBe 2
     intMultiplication.zero shouldBe 1
   }
+
 }
