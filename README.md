@@ -9,3 +9,5 @@ Monad will have to provide implementations of one of these sets:
     * unit and flatMap
     * unit and compose
     * unit , map , and join
+    
+* difference between monads and applicative functors
