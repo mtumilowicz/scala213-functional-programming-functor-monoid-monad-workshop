@@ -1,5 +1,7 @@
 package common
 
+import answers.IO
+
 class MonadTest extends org.scalatest.FunSuite with org.scalatest.matchers.should.Matchers {
 
   test("IO") {
