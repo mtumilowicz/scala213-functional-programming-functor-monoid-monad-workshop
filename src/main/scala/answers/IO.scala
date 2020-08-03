@@ -1,6 +1,21 @@
 package answers
 
-import common.{IO, Monad}
+import common.Monad
+
+sealed trait IO[A] {
+  self =>
+  def run: A
+
+  def map[B](f: A => B): IO[B] =
+    new IO[B] {
+      def run: B = f(self.run)
+    }
+
+  def flatMap[B](f: A => IO[B]): IO[B] =
+    new IO[B] {
+      def run: B = f(self.run).run
+    }
+}
 
 object IO extends Monad[IO] {
   override def unit[A](a: => A): IO[A] = new IO[A] {

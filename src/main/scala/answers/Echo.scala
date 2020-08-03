@@ -1,7 +1,5 @@
 package answers
 
-import common.IO
-
 object Echo extends App {
   def ReadLine: IO[String] = IO {
     scala.io.StdIn.readLine
