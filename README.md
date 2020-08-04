@@ -11,3 +11,17 @@ Monad will have to provide implementations of one of these sets:
     * unit , map , and join
     
 * difference between monads and applicative functors
+
+* 13.2.2 Benefits and drawbacks of the simple IO type
+
+* The name applicative comes from the fact that we can formulate the Applicative
+  interface using an alternate set of primitives, unit and the function apply , rather than
+  unit and map2
+  
+* all monads
+  are applicative functors, and we don’t need to provide separate Applicative instances
+  for all our data types that are already monads
+  
+* We might say that with
+  Applicative , the structure of our computation is fixed; with Monad , the results of pre-
+  vious computations may influence what computations to run next
