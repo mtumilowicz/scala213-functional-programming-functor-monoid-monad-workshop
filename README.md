@@ -71,6 +71,32 @@ unzip function that works not just for lists, but for any functor!
     * unit , map , and join 
   * A monad is an implementation of one of the minimal sets of monadic
     combinators, satisfying the laws of associativity and identity
+* what is the meaning of the identity monad
+     * what is the action of flatMap for the identity monad?
+     * It’s simply variable substitution
+     * variables a and b get bound to "Hello, " and "monad!" , respectively, and
+       then substituted into the expression a + b
+     * without the Id wrapper
+        val a = "Hello, "
+        val b = "monad!"
+        val ab = a + b
+     * We could say that monads provide a context for
+       introducing and binding variables, and performing variable substitution
+* This is true in general for monads—they all have unit and flatMap , and each monad
+  brings its own set of additional primitive operations that are specific to it
+* We can see that a chain of flatMap calls (or an equivalent
+  for-comprehension) is like an imperative program with statements that assign to vari-
+  ables, and the monad specifies what occurs at statement boundaries
+  * For example, with Id ,
+    nothing at all occurs except unwrapping and rewrapping in the Id constructor
+  * With the
+    Option monad, a statement may return None and terminate the program
+  * With the
+    List monad, a statement may return many results, which causes statements that follow
+    it to potentially run multiple times, once for each result
+* Monad contract doesn’t specify what is happening between the lines, only that
+  whatever is happening satisfies the laws of associativity and identity
+     
 * monoids
     * Associativity and parallelism
     
