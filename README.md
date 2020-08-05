@@ -1,5 +1,19 @@
 # scala213-functional-programming-functor-monoid-monad-workshop
 
+
+
+## functors
+* https://github.com/mtumilowicz/java11-category-theory-optional-is-not-functor
+* we implemented a `map` function to lift a function taking one argument "into the context of" some 
+data type
+* Scala trait the idea of "a data type that implements map"
+```
+trait Functor[F[_]] {
+    def map[A,B](fa: F[A])(f: A => B): F[B]
+}
+```
+
+
 * monoids
     * Associativity and parallelism
     
