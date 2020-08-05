@@ -1,10 +1,9 @@
 package answers
 
-import java.time.LocalDate
 
 import common.{Failure, Success, Validation}
 
-object X {
+object PersonValidations {
   def validName(name: String): Validation[String, String] =
     if (name != "") Success(name)
     else Failure("Name cannot be empty")
