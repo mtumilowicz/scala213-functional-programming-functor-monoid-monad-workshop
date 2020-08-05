@@ -1,6 +1,10 @@
 # scala213-functional-programming-functor-monoid-monad-workshop
+* references
+    * http://blog.higher-order.com/assets/fpiscompanion.pdf
 
-
+* workshops order
+    * Functor: distribute, list functor, option functor
+    
 
 ## functors
 * https://github.com/mtumilowicz/java11-category-theory-optional-is-not-functor
@@ -12,8 +16,61 @@ trait Functor[F[_]] {
     def map[A,B](fa: F[A])(f: A => B): F[B]
 }
 ```
+* For example, if we distribute a
+List[(A, B)] , we get two lists of the same length, one with all the A s and the other
+with all the B s. That operation is sometimes called unzip. So we just wrote a generic
+unzip function that works not just for lists, but for any functor!
+* Whenever we create an abstraction like Functor , we should consider not only what
+  abstract methods it should have, but which laws we expect to hold for the implementa-
+  tions
+  * of course Scala won’t enforce any of these laws
+* laws are important for two reasons
+    * Laws help an interface form a new semantic level whose algebra may be rea-
+      soned about independently of the instances
+        * example, when we take the prod-
+          uct of a Monoid[A] and a Monoid[B] to form a Monoid[(A,B)] , the monoid laws
+          let us conclude that the “fused” monoid operation is also associative
+          * We don’t need to know anything about A and B to conclude this
+    * we often rely on laws when writing various combinators
+      derived from the functions of some abstract interface like Functor
+      * example ???
+* If the input to
+  distribute is a list of pairs, the returned pair of lists will be of the same length as the
+  input, and corresponding elements will appear in the same order
+  * This kind of algebraic reasoning can potentially save us a lot of work, since we don’t have 
+  to write separate tests for these properties
 
-
+## monads
+* we know that map can be implemented in terms of flatMap and unit
+    * def map[A,B](f: A => B): Gen[B] = flatMap(a => unit(f(a)))
+* Remember the associative law for monoids?
+    * op(op(x,y), z) == op(x, op(y,z))
+    * associative law for monads: compose(compose(f, g), h) == compose(f, compose(g, h))
+* Just like zero was an identity element for
+  append in a monoid, there’s an identity element for compose in a monad
+  * exactly what unit is: def unit[A](a: => A): F[A]
+  * form of two laws, left identity and right identity:
+    * compose(f, unit) == f
+    * compose(unit, f) == f
+* You may be used to thinking of interfaces as providing a relatively complete API for
+  an abstract data type, merely abstracting over the specific representation
+  * After all, a
+    singly linked list and an array-based list may be implemented differently behind the
+    scenes, but they’ll share a common interface in terms of which a lot of useful and con-
+    crete application code can be written
+  * Monad , like Monoid , is a more abstract, purely
+    algebraic interface
+    * The Monad combinators are often just a small fragment of the full
+      API for a given data type that happens to be a monad
+    * So Monad doesn’t generalize one
+      type or another; rather, many vastly different data types can satisfy the Monad interface
+      and laws
+  * three minimal sets of primitive Monad combinators
+    * unit and flatMap
+    * unit and compose
+    * unit , map , and join 
+  * A monad is an implementation of one of the minimal sets of monadic
+    combinators, satisfying the laws of associativity and identity
 * monoids
     * Associativity and parallelism
     
