@@ -1,7 +1,7 @@
 package common
 
 trait Applicative[F[_]] extends Functor[F] {
-  
+
   def map2[A, B, C](fa: F[A], fb: F[B])(f: (A, B) => C): F[C]
 
   def unit[A](a: => A): F[A]
@@ -33,14 +33,5 @@ object Applicative {
           case (_, e@Failure(_, _)) => e
         }
     }
-
-  //  type Const[A, B] = A
-
-  //  implicit def monoidApplicative[M](M: Monoid[M]): Applicative[({type f[x] = Const[M, x]})#f] =
-  //    new Applicative[({type f[x] = Const[M, x]})#f] {
-  //      def unit[A](a: => A): M = M.zero
-  //
-  //      override def apply[A, B](m1: M)(m2: M): M = M.op(m1, m2)
-  //    }
 
 }
