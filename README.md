@@ -96,21 +96,21 @@ unzip function that works not just for lists, but for any functor!
     it to potentially run multiple times, once for each result
 * Monad contract doesn’t specify what is happening between the lines, only that
   whatever is happening satisfies the laws of associativity and identity
-     
-* monoids
-    * Associativity and parallelism
-    
-    
-We’ve seen three minimal sets of primitive Monad combinators, and instances of
+* Monads provide a powerful interface, as evidenced by the fact
+  that we can use flatMap to essentially write imperative programs in a purely func-
+  tional way
+* We’ve seen three minimal sets of primitive Monad combinators, and instances of
 Monad will have to provide implementations of one of these sets:
     * unit and flatMap
     * unit and compose
     * unit , map , and join
-    
-* difference between monads and applicative functors
-
 * 13.2.2 Benefits and drawbacks of the simple IO type
 
+## monoids
+* monoids
+    * Associativity and parallelism
+      
+## applicative functors
 * The name applicative comes from the fact that we can formulate the Applicative
   interface using an alternate set of primitives, unit and the function apply , rather than
   unit and map2
@@ -122,3 +122,17 @@ Monad will have to provide implementations of one of these sets:
 * We might say that with
   Applicative , the structure of our computation is fixed; with Monad , the results of pre-
   vious computations may influence what computations to run next
+* all applicatives are functors
+* name applicative comes from the fact that we can formulate the Applicative
+  interface using an alternate set of primitives, unit and the function apply , rather than
+  unit and map2
+  * def apply[A,B](fab: F[A => B])(fa: F[A]): F[B]
+  * apply method is useful for implementing map3 , map4 , and so on
+    def map3[A,B,C,D](fa: F[A],
+    fb: F[B],
+    fc: F[C])(f: (A, B, C) => D): F[D]
+* Monad[F] a subtype of Applicative[F] by providing
+  the default implementation of map2 in terms of flatMap . This tells us that all monads
+  are applicative functors
+* difference between monads and applicative functors
+    
