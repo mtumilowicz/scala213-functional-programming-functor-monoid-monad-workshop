@@ -135,4 +135,89 @@ Monad will have to provide implementations of one of these sets:
   the default implementation of map2 in terms of flatMap . This tells us that all monads
   are applicative functors
 * difference between monads and applicative functors
-    
+    * There are monadic combinators such as join and flatMap that can’t
+      be implemented with just map2 and unit
+    * def join[A](f: F[F[A]]): F[A]
+    * join function “removes a layer” of F
+    * unit func-
+      tion only lets us add an F layer, and map2 lets us apply a function within F but does no
+      flattening of layers
+    * Monad is clearly adding some extra capabilities beyond Applicative
+    * Option applicative versus the Option monad
+        * Suppose we’re using Option to work with the results of lookups in two Map objects
+        * If
+          we simply need to combine the results from two (independent) lookups, map2 is fine
+            ```
+            val F: Applicative[Option] = ...
+            val departments: Map[String,String] = ...
+            val salaries: Map[String,Double] = ...
+            val o: Option[String] = F.map2(departments.get("Alice"), salaries.get("Alice")) {
+                (dept, salary) => s"Alice in $dept makes $salary per year"
+            }
+            ```
+        * If we want the result of one lookup to affect what lookup we do next, then we need flatMap or join 
+            * we’re doing two lookups, but they’re independent and we merely want to com-
+            bine their results within the Option context
+            ```
+            val idsByName: Map[String,Int]
+            val departments: Map[Int,String] = ...
+          
+            val o: Option[String] = idsByName.get("Bob")
+                .flatMap { id => departments.get(id) }
+            }
+            ```
+    * We might say that with
+      Applicative , the structure of our computation is fixed; with Monad , the results of pre-
+      vious computations may influence what computations to run next
+    * Applicative computations have fixed structure and simply sequence effects,
+    whereas monadic computations may choose structure dynamically, based on
+    the result of previous effects.
+    * Applicative constructs context-free computations, while Monad allows for context
+    sensitivity.
+        * For example, a monadic parser allows for context-sensitive grammars while an applicative parser can only han-
+          dle context-free grammars
+* advantages of applicative functors
+    * In general, it’s preferable to implement combinators like traverse using as few
+      assumptions as possible. It’s better to assume that a data type can provide map2
+      than flatMap . Otherwise we’d have to write a new traverse every time we
+      encountered a type that’s Applicative but not a Monad 
+    * Because Applicative is “weaker” than Monad , this gives the interpreter of applica-
+      tive effects more flexibility. To take just one example, consider parsing. If we
+      describe a parser without resorting to flatMap , this implies that the structure of
+      our grammar is determined before we begin parsing. Therefore, our inter-
+      preter or runner of parsers has more information about what it’ll be doing up
+      front and is free to make additional assumptions and possibly use a more effi-
+      cient implementation strategy for running the parser, based on this known
+      structure. Adding flatMap is powerful, but it means we’re generating our pars-
+      ers dynamically, so the interpreter may be more limited in what it can do.
+    * Applicative functors compose, whereas monads (in general) don’t
+* Not all applicative functors are monads
+    * VALIDATION: AN EITHER VARIANT THAT ACCUMULATES ERRORS
+        * Either data type and considered the question of how such a data type would have to be 
+        modified to allow us to report multiple errors
+            * For a concrete example, think of validating a web form submission
+                * Only reporting the first error means the user would have to repeatedly submit 
+                the form and fix one error at a time
+        * def eitherMonad[E]: Monad[({type f[x] = Either[E, x]})#f]
+            * consider what happens in a sequence of flatMap calls like the following
+                ```
+                validName(field1) flatMap (f1 =>
+                    validBirthdate(field2) flatMap (f2 =>
+                        validPhone(field3) map (f3 => WebForm(f1, f2, f3))
+                ```
+            * If validName fails with an error, then validBirthdate and validPhone won’t even
+              run. 
+              * The computation with flatMap inherently establishes a linear chain of dependencies
+            * Now think of doing the same thing with map3 :
+              map3(
+              validName(field1),
+              validBirthdate(field2),
+              validPhone(field3))(
+              WebForm(_,_,_))
+            * no dependency is implied between the three expressions passed to map3 , and in
+              principle we can imagine collecting any errors from each Either into a List
+                * if we
+                  use the Either monad, its implementation of map3 in terms of flatMap will halt after
+                  the first error
+            
+              
