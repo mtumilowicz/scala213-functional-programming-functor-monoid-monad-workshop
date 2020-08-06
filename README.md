@@ -219,5 +219,25 @@ Monad will have to provide implementations of one of these sets:
                 * if we
                   use the Either monad, its implementation of map3 in terms of flatMap will halt after
                   the first error
-            
-              
+* The applicative laws
+    * Left and right identity
+        * map(v)(id) == v
+          map(map(v)(g))(f) == map(v)(f compose g)
+        * In other words, map2 of some fa: F[A] with unit preserves the structure of fa
+          map2(unit(()), fa)((_,a) => a) == fa
+          map2(fa, unit(()))((a,_) => a) == fa
+    * Associativity
+        * If we didn’t have
+          this law, we’d need two versions of map3 , perhaps map3L and map3R , depending on the
+          groupin
+        * We can state the associativity law in terms of product
+            * def product[A,B](fa: F[A], fb: F[B]): F[(A,B)] = map2(fa, fb)((_,_))
+            * def assoc[A,B,C](p: (A,(B,C))): ((A,B), C) = p match { case (a, (b, c)) => ((a,b), c) }
+            * product(product(fa,fb),fc) == map(product(fa, product(fb,fc)))(assoc)
+* Naturality of product
+    * When working with Applicative effects, we generally
+      have the option of applying transformations before or after combining values with map2
+      * naturality law states that it doesn’t matter; we get the same result either way
+    * def productF[I,O,I2,O2](f: I => O, g: I2 => O2): (I,I2) => (O,O2) =
+      (i,i2) => (f(i), g(i2))
+    * map2(a,b)(productF(f,g)) == product(map(a)(f), map(b)(g))
