@@ -105,8 +105,58 @@ Monad will have to provide implementations of one of these sets:
     * unit and compose
     * unit , map , and join
 * 13.2.2 Benefits and drawbacks of the simple IO type
+* https://miklos-martin.github.io/learn/fp/2016/03/10/monad-laws-for-regular-developers.html
+
 
 ## monoids
+* monoid consists of the following:
+    * some type A
+    * monoid laws (semigroup with an identity element)
+        * associativity
+            ```
+            op(op(x,y), z) == op(x, op(y,z)) for any choice of x: A, y: A, z: A
+            ```
+        * identity
+            ```
+            exists zero: A, that op(x, zero) == x and op(zero, x) == x for any x: A
+            ```
+* example
+    * string monoid
+        ```
+        val stringMonoid = new Monoid[String] {
+            def op(a1: String, a2: String) = a1 + a2
+            val zero = ""
+        }
+        ```
+* suppose we have
+    ```
+    def foldRight[B](z: B)(f: (A, B) => B): B
+    ```
+    and we want to fold into the same type so
+    ```
+    def foldRight[A](z: A)(f: (A, A) => A): A
+    ```
+    monoid fit these argument types like a glove
+    ```
+    foldRight(monoid.zero)(monoid.op)
+    ```
+    note that foldLeft and foldRight when folding with a monoid gives the same results 
+    due to associativity
+* parallelism
+    * note that due to associativity, below three operations give the same result 
+        ```
+        op(a, op(b, op(c, d)))
+        op(op(op(a, b), c), d)
+        op(op(a, b), op(c, d)) // allows for parallelism
+        ```
+    * proof
+        ```
+        op(op(a, b), op(c, d)) -> op(op(op(a, b), c), d)
+        ```
+* real power of monoids comes from the fact that they compose
+    * consequence: if types A and B are monoids, then the tuple type (A, B) is also a monoid
+    * means that we can perform multiple calculations simultaneously when folding a data structure
+        * example: take the length and sum of a list at the same time in order to calculate
 * monoids
     * Associativity and parallelism
       
