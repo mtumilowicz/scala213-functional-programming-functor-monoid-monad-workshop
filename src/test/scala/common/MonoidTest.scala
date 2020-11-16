@@ -15,17 +15,17 @@ class MonoidTest extends org.scalatest.FunSuite with org.scalatest.matchers.shou
     listConcat.zero shouldBe Nil
   }
 
-  test("IntSum") {
-    def intSum: Monoid[Int] = new Monoid[Int] {
+  test("intAddition") {
+    def intAddition: Monoid[Int] = new Monoid[Int] {
       override def op(a1: Int, a2: Int): Int = a1 + a2
 
       override def zero: Int = 0
     }
 
-    intSum.op(2, 3) shouldBe 5
-    intSum.op(intSum.zero, 3) shouldBe 3
-    intSum.op(2, intSum.zero) shouldBe 2
-    intSum.zero shouldBe 0
+    intAddition.op(2, 3) shouldBe 5
+    intAddition.op(intAddition.zero, 3) shouldBe 3
+    intAddition.op(2, intAddition.zero) shouldBe 2
+    intAddition.zero shouldBe 0
   }
 
   test("IntMultiplication") {
@@ -104,6 +104,14 @@ class MonoidTest extends org.scalatest.FunSuite with org.scalatest.matchers.shou
     }
   }
 
+  test("productMonoid") {
+    def productMonoid[A, B](A: Monoid[A], B: Monoid[B]): Monoid[(A, B)] = new Monoid[(A, B)] {
+      override def op(a1: (A, B), a2: (A, B)): (A, B) = (A.op(a1._1, a2._1), B.op(a1._2, a2._2))
+
+      override def zero: (A, B) = (A.zero, B.zero)
+    }
+  }
+
   test("bagMonoid") {
     def merge[K, V](m1: Map[K, V], m2: Map[K, V])(combine: (V, V) => V): Map[K, V] = {
       val entries = m1.toSeq ++ m2.toSeq
@@ -116,6 +124,29 @@ class MonoidTest extends org.scalatest.FunSuite with org.scalatest.matchers.shou
 
         def op(a: Map[K, V], b: Map[K, V]): Map[K, V] = merge(a, b)(V.op)
       }
+  }
+
+  test("take the length and sum of a list at the same time in order to calculate") {
+    def productMonoid[A, B](A: Monoid[A], B: Monoid[B]): Monoid[(A, B)] = new Monoid[(A, B)] {
+      override def op(a1: (A, B), a2: (A, B)): (A, B) = (A.op(a1._1, a2._1), B.op(a1._2, a2._2))
+
+      override def zero: (A, B) = (A.zero, B.zero)
+    }
+
+    def intAddition: Monoid[Int] = new Monoid[Int] {
+      override def op(a1: Int, a2: Int): Int = a1 + a2
+
+      override def zero: Int = 0
+    }
+
+    val m = productMonoid(intAddition, intAddition)
+
+    def foldMap[A, B](as: List[A], m: Monoid[B])(f: A => B): B =
+      as.map(f).fold(m.zero)(m.op)
+
+    val p = foldMap(List(1,2,3,4), m)(a => (1, a))
+
+    p should be (4, 10)
   }
 
 }
