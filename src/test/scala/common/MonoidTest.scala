@@ -1,13 +1,11 @@
 package common
 
+import answers.MonoidsAnswer
+
 class MonoidTest extends org.scalatest.FunSuite with org.scalatest.matchers.should.Matchers {
 
   test("ListConcat") {
-    def listConcat[A]: Monoid[List[A]] = new Monoid[List[A]] {
-      override def op(a1: List[A], a2: List[A]): List[A] = a1 ++ a2
-
-      override val zero: List[Nothing] = Nil
-    }
+    def listConcat[A] = MonoidsAnswer.listConcat[A]
 
     listConcat.op(List("a"), List("b")) shouldBe List("a", "b")
     listConcat.op(listConcat.zero, List("b")) shouldBe List("b")
@@ -16,11 +14,7 @@ class MonoidTest extends org.scalatest.FunSuite with org.scalatest.matchers.shou
   }
 
   test("intAddition") {
-    def intAddition: Monoid[Int] = new Monoid[Int] {
-      override def op(a1: Int, a2: Int): Int = a1 + a2
-
-      override def zero: Int = 0
-    }
+    def intAddition = MonoidsAnswer.intAddition
 
     intAddition.op(2, 3) shouldBe 5
     intAddition.op(intAddition.zero, 3) shouldBe 3
@@ -29,11 +23,7 @@ class MonoidTest extends org.scalatest.FunSuite with org.scalatest.matchers.shou
   }
 
   test("IntMultiplication") {
-    def intMultiplication: Monoid[Int] = new Monoid[Int] {
-      override def op(a1: Int, a2: Int): Int = a1 * a2
-
-      override def zero: Int = 1
-    }
+    def intMultiplication = MonoidsAnswer.intMultiplication
 
     intMultiplication.op(2, 3) shouldBe 6
     intMultiplication.op(intMultiplication.zero, 3) shouldBe 3
@@ -42,11 +32,7 @@ class MonoidTest extends org.scalatest.FunSuite with org.scalatest.matchers.shou
   }
 
   test("optionMonoid") {
-    def optionMonoid[A]: Monoid[Option[A]] = new Monoid[Option[A]] {
-      override def op(a1: Option[A], a2: Option[A]): Option[A] = a1 orElse a2
-
-      override def zero: Option[A] = Option.empty
-    }
+    def optionMonoid[A] = MonoidsAnswer.optionMonoid[A]
 
     optionMonoid.op(Some(1), Some(2)) shouldBe Some(1)
     optionMonoid.op(Some(1), Option.empty) shouldBe Some(1)
@@ -55,11 +41,7 @@ class MonoidTest extends org.scalatest.FunSuite with org.scalatest.matchers.shou
   }
 
   test("endoMonoid") {
-    def endoMonoid[A]: Monoid[A => A] = new Monoid[A => A] {
-      override def op(a1: A => A, a2: A => A): A => A = a1 compose a2
-
-      override def zero: A => A = a => a
-    }
+    def endoMonoid[A] = MonoidsAnswer.endoMonoid[A]
 
     endoMonoid.op((a: Int) => a * 2, (a: Int) => a * 3)(1) shouldBe 6
     endoMonoid.op(endoMonoid.zero, (a: Int) => a * 3)(1) shouldBe 3
@@ -68,32 +50,11 @@ class MonoidTest extends org.scalatest.FunSuite with org.scalatest.matchers.shou
   }
 
   test("foldMap") {
-    def foldMap[A, B](as: List[A], m: Monoid[B])(f: A => B): B =
-      as.map(f).fold(m.zero)(m.op)
-
-    def intSum: Monoid[Int] = new Monoid[Int] {
-      override def op(a1: Int, a2: Int): Int = a1 + a2
-
-      override def zero: Int = 0
-    }
-
-    foldMap(List("a", "bb", "ccc"), intSum)(_.length) shouldBe 6
+    MonoidsAnswer.foldMap(List("a", "bb", "ccc"), MonoidsAnswer.intAddition)(_.length) shouldBe 6
   }
 
   test("foldRight") {
-    def foldMap[A, B](as: List[A], m: Monoid[B])(f: A => B): B =
-      as.map(f).fold(m.zero)(m.op)
-
-    def endoMonoid[A]: Monoid[A => A] = new Monoid[A => A] {
-      override def op(a1: A => A, a2: A => A): A => A = a1 compose a2
-
-      override def zero: A => A = a => a
-    }
-
-    def foldRight[A, B](as: List[A])(z: B)(f: (A, B) => B): B =
-      foldMap(as, endoMonoid[B])(f.curried)(z)
-
-    foldRight(List(1, 2, 3))("")(_ + _) shouldBe List(1, 2, 3).foldRight("")(_ + _)
+    MonoidsAnswer.foldRight(List(1, 2, 3))("")(_ + _) shouldBe List(1, 2, 3).foldRight("")(_ + _)
   }
 
   test("functionMonoid") {
@@ -101,14 +62,6 @@ class MonoidTest extends org.scalatest.FunSuite with org.scalatest.matchers.shou
       override def op(a1: A => B, a2: A => B): A => B = a => B.op(a1(a), a2(a))
 
       override def zero: A => B = _ => B.zero
-    }
-  }
-
-  test("productMonoid") {
-    def productMonoid[A, B](A: Monoid[A], B: Monoid[B]): Monoid[(A, B)] = new Monoid[(A, B)] {
-      override def op(a1: (A, B), a2: (A, B)): (A, B) = (A.op(a1._1, a2._1), B.op(a1._2, a2._2))
-
-      override def zero: (A, B) = (A.zero, B.zero)
     }
   }
 
@@ -127,19 +80,8 @@ class MonoidTest extends org.scalatest.FunSuite with org.scalatest.matchers.shou
   }
 
   test("take the length and sum of a list at the same time in order to calculate") {
-    def productMonoid[A, B](A: Monoid[A], B: Monoid[B]): Monoid[(A, B)] = new Monoid[(A, B)] {
-      override def op(a1: (A, B), a2: (A, B)): (A, B) = (A.op(a1._1, a2._1), B.op(a1._2, a2._2))
-
-      override def zero: (A, B) = (A.zero, B.zero)
-    }
-
-    def intAddition: Monoid[Int] = new Monoid[Int] {
-      override def op(a1: Int, a2: Int): Int = a1 + a2
-
-      override def zero: Int = 0
-    }
-
-    val m = productMonoid(intAddition, intAddition)
+    val intAddition = MonoidsAnswer.intAddition
+    val m = MonoidsAnswer.productMonoid(intAddition, intAddition)
 
     def foldMap[A, B](as: List[A], m: Monoid[B])(f: A => B): B =
       as.map(f).fold(m.zero)(m.op)
