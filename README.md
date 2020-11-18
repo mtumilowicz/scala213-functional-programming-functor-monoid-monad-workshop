@@ -5,6 +5,7 @@
     * https://typelevel.org/cats/typeclasses/monad.html
     * https://stackoverflow.com/questions/14598990/confused-with-the-for-comprehension-to-flatmap-map-transformation
     * https://docs.scala-lang.org/tutorials/FAQ/yield.html
+    * https://www.james-willett.com/scala-map-flatmap-filter/
 
 * workshops order
     * Functor: distribute, list functor, option functor
@@ -333,7 +334,7 @@ that assign to variables
 * for comprehension
     * each line in the expression using the `<-` symbol is translated to a flatMap call, except 
         * the last line is translated to a concluding `map` call
-        * `x <- c; if cond` is translated to `c.filter(x => cond)`
+        * `x <- c if cond` is translated to `c.filter(x => cond)`
     * flatMap / map
         ```
         for {
@@ -351,10 +352,9 @@ that assign to variables
         ```
     * flatMap / map / filter
         ```
-        for{
+        for {
           sl <- l
-          el <- sl
-          if el > 0
+          el <- sl if el > 0
         } yield el.toString.length
       
         // is equivalent to
