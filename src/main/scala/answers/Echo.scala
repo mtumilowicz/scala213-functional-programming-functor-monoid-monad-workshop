@@ -19,5 +19,9 @@ object Echo extends App {
     _ <- PrintLine(fahrenheitToCelsius(d).toString)
   } yield ()
 
+  def c2 = PrintLine("Enter a temperature in degrees Fahrenheit: ")
+    .flatMap(_ => ReadLine.map(_.toDouble).flatMap(d => PrintLine(fahrenheitToCelsius(d).toString)))
+
   converter.run
+  c2.run
 }
