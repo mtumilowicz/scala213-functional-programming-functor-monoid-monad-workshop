@@ -1,25 +1,12 @@
 # scala213-functional-programming-functor-monoid-monad-workshop
 * references
     * http://blog.higher-order.com/assets/fpiscompanion.pdf
+    * https://typelevel.org/cats/typeclasses/functor.html
 
 * workshops order
     * Functor: distribute, list functor, option functor
     
-
-## functors
-* https://github.com/mtumilowicz/java11-category-theory-optional-is-not-functor
-* we implemented a `map` function to lift a function taking one argument "into the context of" some 
-data type
-* Scala trait the idea of "a data type that implements map"
-```
-trait Functor[F[_]] {
-    def map[A,B](fa: F[A])(f: A => B): F[B]
-}
-```
-* For example, if we distribute a
-List[(A, B)] , we get two lists of the same length, one with all the A s and the other
-with all the B s. That operation is sometimes called unzip. So we just wrote a generic
-unzip function that works not just for lists, but for any functor!
+## preface    
 * Whenever we create an abstraction like Functor , we should consider not only what
   abstract methods it should have, but which laws we expect to hold for the implementa-
   tions
@@ -33,14 +20,91 @@ unzip function that works not just for lists, but for any functor!
           * We don’t need to know anything about A and B to conclude this
     * we often rely on laws when writing various combinators
       derived from the functions of some abstract interface like Functor
-      * example ???
-* If the input to
-  distribute is a list of pairs, the returned pair of lists will be of the same length as the
-  input, and corresponding elements will appear in the same order
-  * This kind of algebraic reasoning can potentially save us a lot of work, since we don’t have 
-  to write separate tests for these properties
+      * For example, if we distribute a
+      List[(A, B)] , we get two lists of the same length, one with all the A s and the other
+      with all the B s. That operation is sometimes called unzip. So we just wrote a generic
+      unzip function that works not just for lists, but for any functor!
+      * If the input to
+        distribute is a list of pairs, the returned pair of lists will be of the same length as the
+        input, and corresponding elements will appear in the same order
+        * This kind of algebraic reasoning can potentially save us a lot of work, since we don’t have 
+        to write separate tests for these properties
+      
+## monoids
+* monoid consists of the following:
+    * some type A
+    * monoid laws (semigroup with an identity element)
+        * associativity
+            ```
+            op(op(x,y), z) == op(x, op(y,z)) for any choice of x: A, y: A, z: A
+            ```
+        * identity
+            ```
+            exists zero: A, that op(x, zero) == x and op(zero, x) == x for any x: A
+            ```
+* trait
+    ```
+    trait Monoid[A] {
+      def op(a1: A, a2: A): A
+    
+      def zero: A
+    }
+    ```
+* example
+    * string monoid
+        ```
+        val stringMonoid = new Monoid[String] {
+            def op(a1: String, a2: String) = a1 + a2
+            val zero = ""
+        }
+        ```
+* suppose we have
+    ```
+    def foldRight[B](z: B)(f: (A, B) => B): B
+    ```
+    and we want to fold into the same type so
+    ```
+    def foldRight[A](z: A)(f: (A, A) => A): A
+    ```
+    monoid fit these argument types like a glove
+    ```
+    foldRight(monoid.zero)(monoid.op)
+    ```
+    note that foldLeft and foldRight when folding with a monoid gives the same results 
+    due to associativity
+* parallelism
+    * note that due to associativity, below three operations give the same result 
+        ```
+        op(a, op(b, op(c, d)))
+        op(op(op(a, b), c), d)
+        op(op(a, b), op(c, d)) // allows for parallelism
+        ```
+    * proof
+        ```
+        op(op(a, b), op(c, d)) -> op(op(op(a, b), c), d)
+        ```
+* real power of monoids comes from the fact that they compose
+    * consequence: if types A and B are monoids, then the tuple type (A, B) is also a monoid
+    * means that we can perform multiple calculations simultaneously when folding a data structure
+        * example: take the length and sum of a list at the same time in order to calculate
 
-## monads
+# functors
+* code
+    ```
+    trait Functor[F[_]] {
+      def map[A, B](fa: F[A])(f: A => B): F[B]
+    }
+    ```
+* we say that a type constructor F is a functor, and the Functor[F] instance constitutes proof 
+that F is in fact a functor
+* must obey two laws:
+    * `fa.map(f).map(g) = fa.map(f.andThen(g))`
+    * `fa.map(x => x) = fa`
+* functors compose: https://github.com/mtumilowicz/scala212-cats-category-theory-composing-functors
+* ref
+    * https://github.com/mtumilowicz/java11-category-theory-optional-is-not-functor
+
+# monads
 * we know that map can be implemented in terms of flatMap and unit
     * def map[A,B](f: A => B): Gen[B] = flatMap(a => unit(f(a)))
 * Remember the associative law for monoids?
@@ -106,59 +170,6 @@ Monad will have to provide implementations of one of these sets:
     * unit , map , and join
 * 13.2.2 Benefits and drawbacks of the simple IO type
 * https://miklos-martin.github.io/learn/fp/2016/03/10/monad-laws-for-regular-developers.html
-
-
-## monoids
-* monoid consists of the following:
-    * some type A
-    * monoid laws (semigroup with an identity element)
-        * associativity
-            ```
-            op(op(x,y), z) == op(x, op(y,z)) for any choice of x: A, y: A, z: A
-            ```
-        * identity
-            ```
-            exists zero: A, that op(x, zero) == x and op(zero, x) == x for any x: A
-            ```
-* example
-    * string monoid
-        ```
-        val stringMonoid = new Monoid[String] {
-            def op(a1: String, a2: String) = a1 + a2
-            val zero = ""
-        }
-        ```
-* suppose we have
-    ```
-    def foldRight[B](z: B)(f: (A, B) => B): B
-    ```
-    and we want to fold into the same type so
-    ```
-    def foldRight[A](z: A)(f: (A, A) => A): A
-    ```
-    monoid fit these argument types like a glove
-    ```
-    foldRight(monoid.zero)(monoid.op)
-    ```
-    note that foldLeft and foldRight when folding with a monoid gives the same results 
-    due to associativity
-* parallelism
-    * note that due to associativity, below three operations give the same result 
-        ```
-        op(a, op(b, op(c, d)))
-        op(op(op(a, b), c), d)
-        op(op(a, b), op(c, d)) // allows for parallelism
-        ```
-    * proof
-        ```
-        op(op(a, b), op(c, d)) -> op(op(op(a, b), c), d)
-        ```
-* real power of monoids comes from the fact that they compose
-    * consequence: if types A and B are monoids, then the tuple type (A, B) is also a monoid
-    * means that we can perform multiple calculations simultaneously when folding a data structure
-        * example: take the length and sum of a list at the same time in order to calculate
-* monoids
-    * Associativity and parallelism
       
 ## applicative functors
 * The name applicative comes from the fact that we can formulate the Applicative
@@ -291,3 +302,5 @@ Monad will have to provide implementations of one of these sets:
     * def productF[I,O,I2,O2](f: I => O, g: I2 => O2): (I,I2) => (O,O2) =
       (i,i2) => (f(i), g(i2))
     * map2(a,b)(productF(f,g)) == product(map(a)(f), map(b)(g))
+    
+* higher kinded type
