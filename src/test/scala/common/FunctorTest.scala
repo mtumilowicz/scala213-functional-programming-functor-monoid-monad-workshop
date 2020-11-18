@@ -1,11 +1,11 @@
 package common
 
+import answers.prepared.FunctorAnswers
+
 class FunctorTest extends org.scalatest.FunSuite with org.scalatest.matchers.should.Matchers {
 
   test("list as a functor") {
-    val listFunctor = new Functor[List] {
-      def map[A, B](as: List[A])(f: A => B): List[B] = as map f
-    }
+    val listFunctor = FunctorAnswers.listFunctor
 
     val doubled = listFunctor.map(List(1, 2, 3))(_ * 2)
     val strings = listFunctor.map(doubled)(_.toString)
@@ -14,9 +14,7 @@ class FunctorTest extends org.scalatest.FunSuite with org.scalatest.matchers.sho
   }
 
   test("unzip as a distribute in list functor") {
-    val listFunctor = new Functor[List] {
-      def map[A, B](as: List[A])(f: A => B): List[B] = as map f
-    }
+    val listFunctor = FunctorAnswers.listFunctor
 
     val unzipped = listFunctor.distribute(List((1, "1"), (2, "2"), (3, "3")))
     unzipped shouldBe(List(1, 2, 3), List("1", "2", "3"))
@@ -24,9 +22,7 @@ class FunctorTest extends org.scalatest.FunSuite with org.scalatest.matchers.sho
 
 
   test("option as a functor") {
-    val optionFunctor = new Functor[Option] {
-      override def map[A, B](fa: Option[A])(f: A => B): Option[B] = fa map f
-    }
+    val optionFunctor = FunctorAnswers.optionFunctor
 
     val doubled = optionFunctor.map(Some(3))(_ * 2)
     val string = optionFunctor.map(doubled)(_.toString)

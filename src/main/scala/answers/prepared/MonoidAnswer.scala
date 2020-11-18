@@ -1,8 +1,8 @@
-package answers
+package answers.prepared
 
 import common.Monoid
 
-object MonoidsAnswer {
+object MonoidAnswer {
 
   def listConcat[A]: Monoid[List[A]] = new Monoid[List[A]] {
     override def op(a1: List[A], a2: List[A]): List[A] = a1 ++ a2
@@ -38,6 +38,25 @@ object MonoidsAnswer {
     override def op(a1: (A, B), a2: (A, B)): (A, B) = (A.op(a1._1, a2._1), B.op(a1._2, a2._2))
 
     override def zero: (A, B) = (A.zero, B.zero)
+  }
+
+  def mapMergeMonoid[K, V](V: Monoid[V]): Monoid[Map[K, V]] = {
+    def merge(m1: Map[K, V], m2: Map[K, V])(combine: (V, V) => V): Map[K, V] = {
+      val entries = m1.toSeq ++ m2.toSeq
+      entries.groupMapReduce(_._1)(_._2)(combine)
+    }
+
+    new Monoid[Map[K, V]] {
+      def zero: Map[K, V] = Map[K, V]()
+
+      def op(a: Map[K, V], b: Map[K, V]): Map[K, V] = merge(a, b)(V.op)
+    }
+  }
+
+  def functionMonoid[A, B](B: Monoid[B]): Monoid[A => B] = new Monoid[A => B] {
+    override def op(a1: A => B, a2: A => B): A => B = a => B.op(a1(a), a2(a))
+
+    override def zero: A => B = _ => B.zero
   }
 
   def foldMap[A, B](as: List[A], m: Monoid[B])(f: A => B): B =
