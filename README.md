@@ -2,6 +2,7 @@
 * references
     * http://blog.higher-order.com/assets/fpiscompanion.pdf
     * https://typelevel.org/cats/typeclasses/functor.html
+    * https://typelevel.org/cats/typeclasses/monad.html
 
 * workshops order
     * Functor: distribute, list functor, option functor
@@ -105,72 +106,76 @@ that F is in fact a functor
     * https://github.com/mtumilowicz/java11-category-theory-optional-is-not-functor
 
 # monads
-* we know that map can be implemented in terms of flatMap and unit
-    * def map[A,B](f: A => B): Gen[B] = flatMap(a => unit(f(a)))
-* Remember the associative law for monoids?
-    * op(op(x,y), z) == op(x, op(y,z))
-    * associative law for monads: compose(compose(f, g), h) == compose(f, compose(g, h))
-* Just like zero was an identity element for
-  append in a monoid, there’s an identity element for compose in a monad
-  * exactly what unit is: def unit[A](a: => A): F[A]
-  * form of two laws, left identity and right identity:
-    * compose(f, unit) == f
-    * compose(unit, f) == f
-* You may be used to thinking of interfaces as providing a relatively complete API for
-  an abstract data type, merely abstracting over the specific representation
-  * After all, a
-    singly linked list and an array-based list may be implemented differently behind the
-    scenes, but they’ll share a common interface in terms of which a lot of useful and con-
-    crete application code can be written
-  * Monad , like Monoid , is a more abstract, purely
-    algebraic interface
-    * The Monad combinators are often just a small fragment of the full
-      API for a given data type that happens to be a monad
-    * So Monad doesn’t generalize one
-      type or another; rather, many vastly different data types can satisfy the Monad interface
-      and laws
-  * three minimal sets of primitive Monad combinators
+* map can be implemented in terms of `flatMap` and `unit`
+    ```
+    def unit[A](a: => A): F[A]
+    def map[A,B](f: A => B): Gen[B] = flatMap(a => unit(f(a)))
+    ```
+* they all have unit and flatMap , and each monad brings its own set of additional primitive 
+operations that are specific to it
+* you may be used to thinking of interfaces as providing a relatively complete API for an abstract 
+data type, merely abstracting over the specific representation
+    * example: List - LinkedList, ArrayList
+* monad doesn’t generalize one type or another - rather many vastly different data types can satisfy the 
+Monad interface and laws
+    * Monad, like Monoid, is an abstract, purely algebraic interface
+* monad is an implementation of one of the minimal sets of primitive combinators
+satisfying the monad laws
+* combinator sets
     * unit and flatMap
     * unit and compose
-    * unit , map , and join 
-  * A monad is an implementation of one of the minimal sets of monadic
-    combinators, satisfying the laws of associativity and identity
+    * unit, map and join
+* monad laws
+    * left identity and right identity
+        ```
+        compose(f, unit) == f
+        compose(unit, f) == f
+        ```
+        * similar to zero element in monoids
+    * associative law for monads
+        ```
+        compose(compose(f, g), h) == compose(f, compose(g, h))
+        ```
+        * similar to associative law for monoids
 * what is the meaning of the identity monad
-     * what is the action of flatMap for the identity monad?
-     * It’s simply variable substitution
-     * variables a and b get bound to "Hello, " and "monad!" , respectively, and
-       then substituted into the expression a + b
-     * without the Id wrapper
+    ```
+    case class Id[A](value: A) {
+      def map[B](f: A => B): Id[B] = Id(f(value))
+    
+      def flatMap[B](f: A => Id[B]): Id[B] = f(value)
+    }
+    ```
+    ```
+    val id = Identity("Hello, ")
+      .flatMap(a => Identity("monad!")
+      .flatMap(b => Identity(a + b)))
+      
+    val id2 = for {
+      a <- Identity("Hello, ")
+      b <- Identity("monad!")
+    } yield a + b
+  
+    // id = Identity(Hello, monad!)
+    // id2 = Identity(Hello, monad!)
+    ```
+    * simply variable substitution
+    * without the Id wrapper
+        ```
         val a = "Hello, "
         val b = "monad!"
         val ab = a + b
-     * We could say that monads provide a context for
-       introducing and binding variables, and performing variable substitution
-* This is true in general for monads—they all have unit and flatMap , and each monad
-  brings its own set of additional primitive operations that are specific to it
-* We can see that a chain of flatMap calls (or an equivalent
-  for-comprehension) is like an imperative program with statements that assign to vari-
-  ables, and the monad specifies what occurs at statement boundaries
-  * For example, with Id ,
-    nothing at all occurs except unwrapping and rewrapping in the Id constructor
-  * With the
-    Option monad, a statement may return None and terminate the program
-  * With the
-    List monad, a statement may return many results, which causes statements that follow
-    it to potentially run multiple times, once for each result
-* Monad contract doesn’t specify what is happening between the lines, only that
-  whatever is happening satisfies the laws of associativity and identity
-* Monads provide a powerful interface, as evidenced by the fact
-  that we can use flatMap to essentially write imperative programs in a purely func-
-  tional way
-* We’ve seen three minimal sets of primitive Monad combinators, and instances of
-Monad will have to provide implementations of one of these sets:
-    * unit and flatMap
-    * unit and compose
-    * unit , map , and join
+        ```
+    * monads provide a context for introducing and binding variables, and performing 
+    variable substitution
+* chain of flatMap calls is like an imperative program with statements 
+that assign to variables
+    * monad specifies what occurs at statement boundaries
+    * example
+        * Option monad - may return None at some point and effectively terminate the processing
 * 13.2.2 Benefits and drawbacks of the simple IO type
 * https://miklos-martin.github.io/learn/fp/2016/03/10/monad-laws-for-regular-developers.html
-      
+* unlike Functors and Applicatives, not all Monads compose
+
 ## applicative functors
 * The name applicative comes from the fact that we can formulate the Applicative
   interface using an alternate set of primitives, unit and the function apply , rather than
