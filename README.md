@@ -3,6 +3,8 @@
     * http://blog.higher-order.com/assets/fpiscompanion.pdf
     * https://typelevel.org/cats/typeclasses/functor.html
     * https://typelevel.org/cats/typeclasses/monad.html
+    * https://stackoverflow.com/questions/14598990/confused-with-the-for-comprehension-to-flatmap-map-transformation
+    * https://docs.scala-lang.org/tutorials/FAQ/yield.html
 
 * workshops order
     * Functor: distribute, list functor, option functor
@@ -123,8 +125,21 @@ Monad interface and laws
 satisfying the monad laws
 * combinator sets
     * unit and flatMap
+        ```
+        def unit[A](a: => A): F[A]
+        def flatMap[A, B](ma: F[A])(f: A => F[B]): F[B]
+        ```
     * unit and compose
+        ```
+        def unit[A](a: => A): F[A]
+        def compose[A,B,C](f: A => F[B], g: B => F[C]): A => F[C]
+        ```
     * unit, map and join
+        ```
+        def unit[A](a: => A): F[A]
+        def map[A, B](fa: F[A])(f: A => B): F[B]
+        def join[A](mma: F[F[A]]): F[A]      
+        ```
 * monad laws
     * left identity and right identity
         ```
@@ -137,41 +152,46 @@ satisfying the monad laws
         compose(compose(f, g), h) == compose(f, compose(g, h))
         ```
         * similar to associative law for monoids
-* what is the meaning of the identity monad
-    ```
-    case class Id[A](value: A) {
-      def map[B](f: A => B): Id[B] = Id(f(value))
-    
-      def flatMap[B](f: A => Id[B]): Id[B] = f(value)
-    }
-    ```
-    ```
-    val id = Identity("Hello, ")
-      .flatMap(a => Identity("monad!")
-      .flatMap(b => Identity(a + b)))
-      
-    val id2 = for {
-      a <- Identity("Hello, ")
-      b <- Identity("monad!")
-    } yield a + b
-  
-    // id = Identity(Hello, monad!)
-    // id2 = Identity(Hello, monad!)
-    ```
-    * simply variable substitution
-    * without the Id wrapper
-        ```
-        val a = "Hello, "
-        val b = "monad!"
-        val ab = a + b
-        ```
-    * monads provide a context for introducing and binding variables, and performing 
-    variable substitution
 * chain of flatMap calls is like an imperative program with statements 
 that assign to variables
     * monad specifies what occurs at statement boundaries
     * example
         * Option monad - may return None at some point and effectively terminate the processing
+    * example: identity monad
+        ```
+        case class Id[A](value: A) {
+          def map[B](f: A => B): Id[B] = Id(f(value))
+        
+          def flatMap[B](f: A => Id[B]): Id[B] = f(value)
+        }
+        ```
+        ```
+        val id = Identity("Hello, ")
+          .flatMap(a => Identity("monad!")
+          .flatMap(b => Identity(a + b)))
+          
+        val id2 = for {
+          a <- Identity("Hello, ")
+          b <- Identity("monad!")
+        } yield a + b
+      
+      
+        val a = "Hello, "
+        val b = "monad!"
+        val ab = a + b
+      
+        // id = Identity(Hello, monad!)
+        // id2 = Identity(Hello, monad!)
+        // ab = "Hello, monad!"
+        ```
+        * simply variable substitution
+        * monads provide a context for introducing and binding variables, and performing 
+        variable substitution
+* IO context
+    ```
+  
+    ```
+    * is a kind of least common denominator for expressing programs with external effects
 * 13.2.2 Benefits and drawbacks of the simple IO type
 * https://miklos-martin.github.io/learn/fp/2016/03/10/monad-laws-for-regular-developers.html
 * unlike Functors and Applicatives, not all Monads compose
@@ -309,3 +329,35 @@ that assign to variables
     * map2(a,b)(productF(f,g)) == product(map(a)(f), map(b)(g))
     
 * higher kinded type
+
+* for comprehension
+    * each line in the expression using the `<-` symbol is translated to a flatMap call, except 
+        * the last line is translated to a concluding `map` call
+        * `x <- c; if cond` is translated to `c.filter(x => cond)`
+    * flatMap / map
+        ```
+        for {
+          bound <- list
+          out <- f(bound)
+        } yield out
+      
+        // is equivalent to
+      
+        list.flatMap { bound =>
+          f(bound).map { out =>
+            out
+          }
+        }
+        ```
+    * flatMap / map / filter
+        ```
+        for{
+          sl <- l
+          el <- sl
+          if el > 0
+        } yield el.toString.length
+      
+        // is equivalent to
+      
+        l.flatMap(sl => sl.filter(el => el > 0).map(el => el.toString.length))
+        ```
