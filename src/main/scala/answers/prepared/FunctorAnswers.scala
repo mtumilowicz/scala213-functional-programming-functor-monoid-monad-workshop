@@ -10,4 +10,7 @@ object FunctorAnswers {
   def optionFunctor: Functor[Option] = new Functor[Option] {
     override def map[A, B](fa: Option[A])(f: A => B): Option[B] = fa map f
   }
+
+  def distribute[A, B, F[_]](f: Functor[F], fab: F[(A, B)]): (F[A], F[B]) =
+    (f.map(fab)(_._1), f.map(fab)(_._2))
 }

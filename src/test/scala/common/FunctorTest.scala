@@ -16,7 +16,7 @@ class FunctorTest extends org.scalatest.FunSuite with org.scalatest.matchers.sho
   test("unzip as a distribute in list functor") {
     val listFunctor = FunctorAnswers.listFunctor
 
-    val unzipped = listFunctor.distribute(List((1, "1"), (2, "2"), (3, "3")))
+    val unzipped = FunctorAnswers.distribute(listFunctor, List((1, "1"), (2, "2"), (3, "3")))
     unzipped shouldBe(List(1, 2, 3), List("1", "2", "3"))
   }
 
