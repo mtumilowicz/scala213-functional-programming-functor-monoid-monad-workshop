@@ -6,6 +6,7 @@
     * https://stackoverflow.com/questions/14598990/confused-with-the-for-comprehension-to-flatmap-map-transformation
     * https://docs.scala-lang.org/tutorials/FAQ/yield.html
     * https://www.james-willett.com/scala-map-flatmap-filter/
+    * https://miklos-martin.github.io/learn/fp/2016/03/10/monad-laws-for-regular-developers.html
 
 * workshops order
     * Functor: distribute, list functor, option functor
@@ -146,11 +147,19 @@ satisfying the monad laws
         ```
         compose(f, unit) == f
         compose(unit, f) == f
+      
+        // example for option
+        option.flatMap(Some(_)) == option
+      
+        Some(value).flatMap(f) == f(value)
         ```
         * similar to zero element in monoids
     * associative law for monads
         ```
         compose(compose(f, g), h) == compose(f, compose(g, h))
+      
+        // example for option
+        option.flatMap(f).flatMap(g) == option.flatMap(f(_).flatMap(g))
         ```
         * similar to associative law for monoids
 * chain of flatMap calls is like an imperative program with statements 
@@ -193,8 +202,11 @@ that assign to variables
   
     ```
     * is a kind of least common denominator for expressing programs with external effects
-* 13.2.2 Benefits and drawbacks of the simple IO type
-* https://miklos-martin.github.io/learn/fp/2016/03/10/monad-laws-for-regular-developers.html
+    * clearly separates pure code from impure code, forcing us to be honest about where 
+    interactions with the outside world are occurring
+    * IO computations are ordinary values. 
+        * We can store them in lists, pass them to functions, create them dynamically, and so on
+    * Many IO programs will overflow the runtime call stack and throw a StackOverflowError
 * unlike Functors and Applicatives, not all Monads compose
 
 ## applicative functors
