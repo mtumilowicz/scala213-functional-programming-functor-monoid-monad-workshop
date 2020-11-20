@@ -1,15 +1,20 @@
-package common
+package structures
 
-import structures.Functor
+sealed trait Validation[+E, +A]
 
-trait Applicative[F[_]] extends Functor[F] {
+case class Failure[E](head: E, tail: Vector[E] = Vector.empty[E])
+  extends Validation[E, Nothing]
 
-  def map2[A, B, C](fa: F[A], fb: F[B])(f: (A, B) => C): F[C]
+case class Success[A](a: A) extends Validation[Nothing, A]
+
+trait Applicative[F[_]] {
 
   def unit[A](a: => A): F[A]
 
+  def map2[A, B, C](fa: F[A], fb: F[B])(f: (A, B) => C): F[C]
+
   def apply[A, B](fab: F[A => B])(fa: F[A]): F[B] =
-    map2(fab, fa)(_ (_))
+    map2(fab, fa)((f, a) => f(a))
 
   def map[A, B](fa: F[A])(f: A => B): F[B] =
     map2(fa, unit(()))((a, _) => f(a))

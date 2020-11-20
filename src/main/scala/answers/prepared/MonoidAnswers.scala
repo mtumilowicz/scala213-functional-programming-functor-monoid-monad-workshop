@@ -2,7 +2,7 @@ package answers.prepared
 
 import structures.Monoid
 
-object MonoidAnswer {
+object MonoidAnswers {
 
   def listConcat[A]: Monoid[List[A]] = new Monoid[List[A]] {
     override def op(a1: List[A], a2: List[A]): List[A] = a1 ++ a2

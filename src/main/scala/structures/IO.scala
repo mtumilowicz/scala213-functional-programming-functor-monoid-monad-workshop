@@ -1,10 +1,8 @@
-package answers
-
-import structures.Monad
+package structures
 
 sealed trait IO[A] {
-  self => //  self argument lets us refer to this object as self instead of this
-  def run: A // converter definition no longer has side effects—it’s a referentially transparent description of a computation with effects
+  self =>
+  def run: A
 
   def map[B](f: A => B): IO[B] =
     new IO[B] {

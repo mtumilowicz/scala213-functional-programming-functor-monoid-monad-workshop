@@ -7,7 +7,7 @@ object ForComprehensionAnswers {
       i <- ints if i % 2 == 0
       c <- chars
       s <- strings
-    } yield (i + " " + c + " " + s)
+    } yield s"$i $c $s"
   }
 
 }
