@@ -27,7 +27,7 @@ trait Applicative[F[_]] {
 }
 
 object Applicative {
-  def validationApplicative[E]: Applicative[({type f[x] = Validation[E, x]})#f] =
+  def validation[E]: Applicative[({type f[x] = Validation[E, x]})#f] =
     new Applicative[({type f[x] = Validation[E, x]})#f] {
       def unit[A](a: => A): Success[A] = Success(a)
 
