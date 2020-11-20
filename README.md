@@ -9,31 +9,28 @@
     * https://miklos-martin.github.io/learn/fp/2016/03/10/monad-laws-for-regular-developers.html
 
 * workshops order
-    * Functor: distribute, list functor, option functor
     
 ## preface    
-* Whenever we create an abstraction like Functor , we should consider not only what
-  abstract methods it should have, but which laws we expect to hold for the implementa-
-  tions
-  * of course Scala won’t enforce any of these laws
+* whenever we create an abstraction like Functor
+    * we should consider abstract methods it should have
+    * and laws we expect to hold for the implementations
+        * of course Scala won’t enforce any of these laws
 * laws are important for two reasons
-    * Laws help an interface form a new semantic level whose algebra may be rea-
-      soned about independently of the instances
-        * example, when we take the prod-
-          uct of a Monoid[A] and a Monoid[B] to form a Monoid[(A,B)] , the monoid laws
-          let us conclude that the “fused” monoid operation is also associative
-          * We don’t need to know anything about A and B to conclude this
-    * we often rely on laws when writing various combinators
-      derived from the functions of some abstract interface like Functor
-      * For example, if we distribute a
-      List[(A, B)] , we get two lists of the same length, one with all the A s and the other
-      with all the B s. That operation is sometimes called unzip. So we just wrote a generic
-      unzip function that works not just for lists, but for any functor!
-      * If the input to
-        distribute is a list of pairs, the returned pair of lists will be of the same length as the
-        input, and corresponding elements will appear in the same order
-        * This kind of algebraic reasoning can potentially save us a lot of work, since we don’t have 
-        to write separate tests for these properties
+    1. help an interface form a new semantic level
+        * algebra may be reasoned about independently of the instances
+        * example
+            * we could proof that `Monoid[(A,B)]` constructed from `Monoid[A]` and `Monoid[B]`
+            is actually a monoid
+            * we don’t need to know anything about `A` and `B` to conclude this
+    1. we often rely on laws when writing various combinators 
+    derived from the functions of some abstract interface like Functor
+        * example
+            * if we distribute a `List[(A, B)]` we get two lists of the same length, one with all 
+            the As and the other with all the Bs and corresponding elements will appear in the same order
+                * operations sometimes called unzip
+            * we could write a generic unzip function that works not just for lists, but for any functor
+            * this kind of algebraic reasoning can potentially save us a lot of work, since 
+            we don’t have to write separate tests for these properties
       
 ## monoids
 * monoid consists of the following:
@@ -199,53 +196,46 @@ that assign to variables
         variable substitution
 * IO context
     ```
-  
+    sealed trait IO[A] {
+      self => //  self argument lets us refer to this object as self instead of this
+      def run: A
+    
+      def map[B](f: A => B): IO[B] =
+        new IO[B] {
+          def run: B = f(self.run)
+        }
+    
+      def flatMap[B](f: A => IO[B]): IO[B] =
+        new IO[B] {
+          def run: B = f(self.run).run
+        }
+    }
     ```
     * is a kind of least common denominator for expressing programs with external effects
     * clearly separates pure code from impure code, forcing us to be honest about where 
     interactions with the outside world are occurring
-    * IO computations are ordinary values. 
-        * We can store them in lists, pass them to functions, create them dynamically, and so on
-    * Many IO programs will overflow the runtime call stack and throw a StackOverflowError
+        * referentially transparent description of a computation with effects
+    * IO computations are ordinary values
+        * we can store them in lists, pass them to functions, create them dynamically, and so on
+    * many IO programs will overflow the runtime call stack and throw a StackOverflowError
 * unlike Functors and Applicatives, not all Monads compose
 
 ## applicative functors
 * The name applicative comes from the fact that we can formulate the Applicative
-  interface using an alternate set of primitives, unit and the function apply , rather than
+  interface using an alternate set of primitives, unit and the function apply, rather than
   unit and map2
-  
-* all monads
-  are applicative functors, and we don’t need to provide separate Applicative instances
-  for all our data types that are already monads
-  
-* We might say that with
-  Applicative , the structure of our computation is fixed; with Monad , the results of pre-
-  vious computations may influence what computations to run next
+    * def apply[A,B](fab: F[A => B])(fa: F[A]): F[B]
 * all applicatives are functors
-* name applicative comes from the fact that we can formulate the Applicative
-  interface using an alternate set of primitives, unit and the function apply , rather than
-  unit and map2
-  * def apply[A,B](fab: F[A => B])(fa: F[A]): F[B]
-  * apply method is useful for implementing map3 , map4 , and so on
-    def map3[A,B,C,D](fa: F[A],
-    fb: F[B],
-    fc: F[C])(f: (A, B, C) => D): F[D]
-* Monad[F] a subtype of Applicative[F] by providing
-  the default implementation of map2 in terms of flatMap . This tells us that all monads
-  are applicative functors
-* difference between monads and applicative functors
-    * There are monadic combinators such as join and flatMap that can’t
-      be implemented with just map2 and unit
-    * def join[A](f: F[F[A]]): F[A]
-    * join function “removes a layer” of F
-    * unit func-
-      tion only lets us add an F layer, and map2 lets us apply a function within F but does no
-      flattening of layers
-    * Monad is clearly adding some extra capabilities beyond Applicative
+* all monads are applicative functors
+    * difference between monads and applicative functors
+        * applicative constructs context-free computations, while Monad allows for context sensitivity
+        * `join` and `flatMap` can’t be implemented with just `map2` and `unit`
+            * `def join[A](f: F[F[A]]): F[A] // "removes a layer" of F`
+            * `unit` function only lets us add an F layer
+            * `map2` lets us apply a function within F but does no flattening of layers
     * Option applicative versus the Option monad
-        * Suppose we’re using Option to work with the results of lookups in two Map objects
-        * If
-          we simply need to combine the results from two (independent) lookups, map2 is fine
+        * simply combine the results from two (independent) lookups
+            * `map2` is fine
             ```
             val F: Applicative[Option] = ...
             val departments: Map[String,String] = ...
@@ -254,9 +244,8 @@ that assign to variables
                 (dept, salary) => s"Alice in $dept makes $salary per year"
             }
             ```
-        * If we want the result of one lookup to affect what lookup we do next, then we need flatMap or join 
-            * we’re doing two lookups, but they’re independent and we merely want to com-
-            bine their results within the Option context
+        * result of one lookup to affect what lookup we do next
+            * we need `flatMap` or `join` 
             ```
             val idsByName: Map[String,Int]
             val departments: Map[Int,String] = ...
@@ -265,31 +254,12 @@ that assign to variables
                 .flatMap { id => departments.get(id) }
             }
             ```
-    * We might say that with
-      Applicative , the structure of our computation is fixed; with Monad , the results of pre-
-      vious computations may influence what computations to run next
-    * Applicative computations have fixed structure and simply sequence effects,
-    whereas monadic computations may choose structure dynamically, based on
-    the result of previous effects.
-    * Applicative constructs context-free computations, while Monad allows for context
-    sensitivity.
-        * For example, a monadic parser allows for context-sensitive grammars while an applicative parser can only han-
-          dle context-free grammars
 * advantages of applicative functors
-    * In general, it’s preferable to implement combinators like traverse using as few
-      assumptions as possible. It’s better to assume that a data type can provide map2
-      than flatMap . Otherwise we’d have to write a new traverse every time we
-      encountered a type that’s Applicative but not a Monad 
-    * Because Applicative is “weaker” than Monad , this gives the interpreter of applica-
-      tive effects more flexibility. To take just one example, consider parsing. If we
-      describe a parser without resorting to flatMap , this implies that the structure of
-      our grammar is determined before we begin parsing. Therefore, our inter-
-      preter or runner of parsers has more information about what it’ll be doing up
-      front and is free to make additional assumptions and possibly use a more effi-
-      cient implementation strategy for running the parser, based on this known
-      structure. Adding flatMap is powerful, but it means we’re generating our pars-
-      ers dynamically, so the interpreter may be more limited in what it can do.
-    * Applicative functors compose, whereas monads (in general) don’t
+    * it’s preferable to implement combinators like traverse using as few assumptions 
+    as possible
+        * it’s better to assume that a data type can provide `map2` than `flatMap`
+        * otherwise we’d have to write a new traverse every time we encountered 
+        a type that’s Applicative but not a Monad 
 * Not all applicative functors are monads
     * VALIDATION: AN EITHER VARIANT THAT ACCUMULATES ERRORS
         * Either data type and considered the question of how such a data type would have to be 
@@ -341,6 +311,7 @@ that assign to variables
       (i,i2) => (f(i), g(i2))
     * map2(a,b)(productF(f,g)) == product(map(a)(f), map(b)(g))
     
+## appendix
 * higher kinded type
 
 * for comprehension
