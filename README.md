@@ -192,7 +192,7 @@ that assign to variables
 * IO context
     ```
     sealed trait IO[A] {
-      self => //  self argument lets us refer to this object as self instead of this
+      self => //  lets us refer to this object inside closures
       def run: A
     
       def map[B](f: A => B): IO[B] =
