@@ -4,14 +4,14 @@ class ForComprehensionAnswersTest extends org.scalatest.FunSuite with org.scalat
 
   val subject = ForComprehensionAnswers
 
-  test("generate all combinations") {
+  test("even combinations") {
     // given
     val ints = List.range(1, 3)
     val chars = List.range('a', 'd')
     val strings = List("ff", "gg", "hh")
 
     // when
-    val combinations = subject.allCombinations(ints, chars, strings)
+    val combinations = subject.evenCombinations(ints, chars, strings)
 
     // then
     combinations should be (List(
