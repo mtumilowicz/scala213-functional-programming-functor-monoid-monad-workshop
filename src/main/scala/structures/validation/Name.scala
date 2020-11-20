@@ -2,7 +2,7 @@ package structures.validation
 
 import structures.{Failure, Success, Validation}
 
-case class Name private(name: String)
+case class Name private(raw: String)
 
 object Name {
   def check(name: String): Validation[String, Name] =
