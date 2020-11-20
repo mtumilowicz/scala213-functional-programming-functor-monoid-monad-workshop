@@ -10,9 +10,9 @@
 
 * workshops order
     
-## preface    
+## introduction    
 * whenever we create an abstraction like Functor
-    * we should consider abstract methods it should have
+    * consider abstract methods it should have
     * and laws we expect to hold for the implementations
         * of course Scala won’t enforce any of these laws
 * laws are important for two reasons
@@ -21,21 +21,27 @@
         * example
             * we could proof that `Monoid[(A,B)]` constructed from `Monoid[A]` and `Monoid[B]`
             is actually a monoid
-            * we don’t need to know anything about `A` and `B` to conclude this
-    1. we often rely on laws when writing various combinators 
-    derived from the functions of some abstract interface like Functor
+                * we don’t need to know anything about `A` and `B` to conclude this
+    1. we often rely on laws when writing various combinators
         * example
-            * if we distribute a `List[(A, B)]` we get two lists of the same length, one with all 
-            the As and the other with all the Bs and corresponding elements will appear in the same order
-                * operations sometimes called unzip
-            * we could write a generic unzip function that works not just for lists, but for any functor
+            * unzip `List[(A, B)]` into `List[A]`, `List[B]`
+                * same length
+                * corresponding elements in the same order
+            * we could write a generic unzip function that works for any functor
             * this kind of algebraic reasoning can potentially save us a lot of work, since 
             we don’t have to write separate tests for these properties
       
 ## monoids
 * monoid consists of the following:
-    * some type A
-    * monoid laws (semigroup with an identity element)
+    * trait
+        ```
+        trait Monoid[A] {
+          def op(a1: A, a2: A): A
+        
+          def zero: A
+        }
+        ```
+    * laws (semigroup with an identity element)
         * associativity
             ```
             op(op(x,y), z) == op(x, op(y,z)) for any choice of x: A, y: A, z: A
@@ -44,14 +50,6 @@
             ```
             exists zero: A, that op(x, zero) == x and op(zero, x) == x for any x: A
             ```
-* trait
-    ```
-    trait Monoid[A] {
-      def op(a1: A, a2: A): A
-    
-      def zero: A
-    }
-    ```
 * example
     * string monoid
         ```
@@ -60,7 +58,7 @@
             val zero = ""
         }
         ```
-* suppose we have
+* folding context
     ```
     def foldRight[B](z: B)(f: (A, B) => B): B
     ```
@@ -72,23 +70,20 @@
     ```
     foldRight(monoid.zero)(monoid.op)
     ```
-    note that foldLeft and foldRight when folding with a monoid gives the same results 
-    due to associativity
+    foldLeft and foldRight gives the same results when folding with monoid (associativity) 
 * parallelism
-    * note that due to associativity, below three operations give the same result 
+    * below three operations give the same result
         ```
         op(a, op(b, op(c, d)))
         op(op(op(a, b), c), d)
         op(op(a, b), op(c, d)) // allows for parallelism
         ```
-    * proof
+    * proof (associativity)
         ```
         op(op(a, b), op(c, d)) -> op(op(op(a, b), c), d)
         ```
-* real power of monoids comes from the fact that they compose
-    * consequence: if types A and B are monoids, then the tuple type (A, B) is also a monoid
-    * means that we can perform multiple calculations simultaneously when folding a data structure
-        * example: take the length and sum of a list at the same time in order to calculate
+* monoids compose
+    * consequence: A, B monoids -> (A, B) is also a monoid
 
 # functors
 * code

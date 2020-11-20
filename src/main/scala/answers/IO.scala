@@ -1,6 +1,6 @@
 package answers
 
-import common.Monad
+import structures.Monad
 
 sealed trait IO[A] {
   self => //  self argument lets us refer to this object as self instead of this

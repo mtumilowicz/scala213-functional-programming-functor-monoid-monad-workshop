@@ -1,6 +1,6 @@
 package answers.prepared
 
-import common.Functor
+import structures.Functor
 
 object FunctorAnswers {
   def listFunctor: Functor[List] = new Functor[List] {

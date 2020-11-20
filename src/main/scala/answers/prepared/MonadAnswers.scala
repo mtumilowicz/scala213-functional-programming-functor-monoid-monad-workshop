@@ -1,6 +1,6 @@
 package answers.prepared
 
-import common.Monad
+import structures.Monad
 
 object MonadAnswers {
   def maybe: Monad[Option] = new Monad[Option] {
