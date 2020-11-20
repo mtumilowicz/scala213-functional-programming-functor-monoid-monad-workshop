@@ -1,6 +1,7 @@
 package common
 
-import answers.prepared.{ForComprehensionAnswers, FunctorAnswers}
+import answers.ForComprehensionAnswers
+import answers.prepared.FunctorAnswers
 
 class ForComprehensionTest extends org.scalatest.FunSuite with org.scalatest.matchers.should.Matchers {
 

@@ -1,5 +1,6 @@
 package answers.prepared
 
+import answers.PersonValidatorAnswers
 import structures.validation.{PersonRequest, ValidPerson}
 import structures.{Failure, Success, Validation}
 

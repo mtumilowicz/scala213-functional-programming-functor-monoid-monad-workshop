@@ -1,6 +1,6 @@
 package common
 
-import answers.prepared.MonoidAnswers
+import answers.MonoidAnswers
 import structures.Monoid
 
 class MonoidTest extends org.scalatest.FunSuite with org.scalatest.matchers.should.Matchers {

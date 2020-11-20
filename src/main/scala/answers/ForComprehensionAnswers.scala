@@ -1,4 +1,4 @@
-package answers.prepared
+package answers
 
 object ForComprehensionAnswers {
 

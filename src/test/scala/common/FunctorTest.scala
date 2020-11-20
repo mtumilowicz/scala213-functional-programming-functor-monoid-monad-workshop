@@ -1,6 +1,6 @@
 package common
 
-import answers.prepared.FunctorAnswers
+import answers.FunctorAnswers
 
 class FunctorTest extends org.scalatest.FunSuite with org.scalatest.matchers.should.Matchers {
 
