@@ -1,17 +1,18 @@
-package answers.prepared
+package answers
 
-import answers.PersonValidatorAnswers
 import structures.validation.{PersonRequest, ValidPerson}
 import structures.{Failure, Success, Validation}
 
 class PersonValidatorAnswersTest extends org.scalatest.FunSuite with org.scalatest.matchers.should.Matchers {
+
+  val subject = PersonValidatorAnswers
 
   test("valid request") {
     // given
     val personRequest = PersonRequest("John", "1234567890")
 
     // when
-    val validation: Validation[String, ValidPerson] = PersonValidatorAnswers.validate(personRequest)
+    val validation: Validation[String, ValidPerson] = subject.validate(personRequest)
 
     // expect
     validation match {
@@ -26,7 +27,7 @@ class PersonValidatorAnswersTest extends org.scalatest.FunSuite with org.scalate
     val personRequest = PersonRequest("", "")
 
     // when
-    val validation: Validation[String, ValidPerson] = PersonValidatorAnswers.validate(personRequest)
+    val validation: Validation[String, ValidPerson] = subject.validate(personRequest)
 
     // expect
     validation match {

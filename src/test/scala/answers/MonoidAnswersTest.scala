@@ -1,13 +1,14 @@
-package common
+package answers
 
-import answers.MonoidAnswers
 import structures.Monoid
 
-class MonoidTest extends org.scalatest.FunSuite with org.scalatest.matchers.should.Matchers {
+class MonoidAnswersTest extends org.scalatest.FunSuite with org.scalatest.matchers.should.Matchers {
+
+  val subject = MonoidAnswers
 
   test("listConcat") {
     // given
-    def listConcat[A] = MonoidAnswers.listConcat[A]
+    def listConcat[A] = subject.listConcat[A]
 
     // expect
     listConcat.op(List("a"), List("b")) shouldBe List("a", "b")
@@ -18,7 +19,7 @@ class MonoidTest extends org.scalatest.FunSuite with org.scalatest.matchers.shou
 
   test("intAddition") {
     //given
-    def intAddition = MonoidAnswers.intAddition
+    def intAddition = subject.intAddition
 
     // expect
     intAddition.op(2, 3) shouldBe 5
@@ -29,8 +30,8 @@ class MonoidTest extends org.scalatest.FunSuite with org.scalatest.matchers.shou
 
   test("functionMonoid") {
     // given
-    def intAddition = MonoidAnswers.intAddition
-    def functionMonoid: Monoid[String => Int] = MonoidAnswers.functionMonoid(intAddition)
+    def intAddition = subject.intAddition
+    def functionMonoid: Monoid[String => Int] = subject.functionMonoid(intAddition)
 
     // and
     def f1: String => Int = _.length
@@ -43,8 +44,8 @@ class MonoidTest extends org.scalatest.FunSuite with org.scalatest.matchers.shou
 
   test("bagMonoid") {
     // given
-    def intAddition = MonoidAnswers.intAddition
-    def mapMergeMonoid: Monoid[Map[String, Int]] = MonoidAnswers.mapMergeMonoid(intAddition)
+    def intAddition = subject.intAddition
+    def mapMergeMonoid: Monoid[Map[String, Int]] = subject.mapMergeMonoid(intAddition)
 
     // and
     val map1 = Map("a" -> 1, "b" -> 2)
