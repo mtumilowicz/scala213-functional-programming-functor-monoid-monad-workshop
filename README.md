@@ -221,21 +221,19 @@ that assign to variables
 * unlike Functors and Applicatives, not all Monads compose
 
 ## applicative functors
-* The name applicative comes from the fact that we can formulate the Applicative
-  interface using an alternate set of primitives, unit and the function apply, rather than
+* Applicative interface could be formulated using unit and the function apply, rather than
   unit and map2
-    * def apply[A,B](fab: F[A => B])(fa: F[A]): F[B]
+    * `def apply[A,B](fab: F[A => B])(fa: F[A]): F[B]`
 * all applicatives are functors
-* all monads are applicative functors
-    * difference between monads and applicative functors
+* all monads are applicatives
+    * difference between monads and applicatives
         * applicative constructs context-free computations, while Monad allows for context sensitivity
         * `join` and `flatMap` can’t be implemented with just `map2` and `unit`
             * `def join[A](f: F[F[A]]): F[A] // "removes a layer" of F`
-            * `unit` function only lets us add an F layer
-            * `map2` lets us apply a function within F but does no flattening of layers
-    * Option applicative versus the Option monad
-        * simply combine the results from two (independent) lookups
-            * `map2` is fine
+            * `unit` function only lets us add an `F` layer
+            * `map2` lets us apply a function within `F` but does no flattening of layers
+    * `Option` applicative versus the `Option` monad
+        * combine the results from two (independent) lookups: `map2`
             ```
             val F: Applicative[Option] = ...
             val departments: Map[String,String] = ...
@@ -244,8 +242,7 @@ that assign to variables
                 (dept, salary) => s"Alice in $dept makes $salary per year"
             }
             ```
-        * result of one lookup to affect what lookup we do next
-            * we need `flatMap` or `join` 
+        * result of one lookup to affect next lookup: `flatMap` 
             ```
             val idsByName: Map[String,Int]
             val departments: Map[Int,String] = ...
@@ -254,63 +251,44 @@ that assign to variables
                 .flatMap { id => departments.get(id) }
             }
             ```
-* advantages of applicative functors
-    * it’s preferable to implement combinators like traverse using as few assumptions 
-    as possible
+* advantages
+    * preferable to implement combinators using as few assumptions as possible
         * it’s better to assume that a data type can provide `map2` than `flatMap`
         * otherwise we’d have to write a new traverse every time we encountered 
         a type that’s Applicative but not a Monad 
-* Not all applicative functors are monads
-    * VALIDATION: AN EITHER VARIANT THAT ACCUMULATES ERRORS
-        * Either data type and considered the question of how such a data type would have to be 
-        modified to allow us to report multiple errors
-            * For a concrete example, think of validating a web form submission
-                * Only reporting the first error means the user would have to repeatedly submit 
-                the form and fix one error at a time
-        * def eitherMonad[E]: Monad[({type f[x] = Either[E, x]})#f]
-            * consider what happens in a sequence of flatMap calls like the following
-                ```
-                validName(field1) flatMap (f1 =>
-                    validBirthdate(field2) flatMap (f2 =>
-                        validPhone(field3) map (f3 => WebForm(f1, f2, f3))
-                ```
-            * If validName fails with an error, then validBirthdate and validPhone won’t even
-              run. 
-              * The computation with flatMap inherently establishes a linear chain of dependencies
-            * Now think of doing the same thing with map3 :
-              map3(
-              validName(field1),
-              validBirthdate(field2),
-              validPhone(field3))(
-              WebForm(_,_,_))
-            * no dependency is implied between the three expressions passed to map3 , and in
-              principle we can imagine collecting any errors from each Either into a List
-                * if we
-                  use the Either monad, its implementation of map3 in terms of flatMap will halt after
-                  the first error
+* not all applicative functors are monads
+* validation context
+    * for a concrete example, think of validating a web form submission
+        * only reporting the first error means the user would have to repeatedly submit 
+        the form and fix one error at a time
+        * consider what happens in a sequence of `flatMap` calls like the following
+            ```
+            validName(field1) flatMap (f1 =>
+                validBirthdate(field2) flatMap (f2 =>
+                    validPhone(field3) map (f3 => ValidInput(f1, f2, f3))
+            ```
+            * if `validName` fails with an error, then `validBirthdate` and `validPhone` won’t even run 
+        * now think of doing the same thing with `map3`
+            ```
+            map3(validName(field1), validBirthdate(field2), validPhone(field3))(ValidInput(_,_,_))
+            ```
+            * no dependency implied between the three expressions
 * The applicative laws
-    * Left and right identity
-        * map(v)(id) == v
-          map(map(v)(g))(f) == map(v)(f compose g)
-        * In other words, map2 of some fa: F[A] with unit preserves the structure of fa
-          map2(unit(()), fa)((_,a) => a) == fa
-          map2(fa, unit(()))((a,_) => a) == fa
-    * Associativity
-        * If we didn’t have
-          this law, we’d need two versions of map3 , perhaps map3L and map3R , depending on the
-          groupin
-        * We can state the associativity law in terms of product
-            * def product[A,B](fa: F[A], fb: F[B]): F[(A,B)] = map2(fa, fb)((_,_))
-            * def assoc[A,B,C](p: (A,(B,C))): ((A,B), C) = p match { case (a, (b, c)) => ((a,b), c) }
-            * product(product(fa,fb),fc) == map(product(fa, product(fb,fc)))(assoc)
-* Naturality of product
-    * When working with Applicative effects, we generally
-      have the option of applying transformations before or after combining values with map2
-      * naturality law states that it doesn’t matter; we get the same result either way
-    * def productF[I,O,I2,O2](f: I => O, g: I2 => O2): (I,I2) => (O,O2) =
-      (i,i2) => (f(i), g(i2))
-    * map2(a,b)(productF(f,g)) == product(map(a)(f), map(b)(g))
-    
+    * left and right identity
+        ```
+        map(v)(id) == v
+        map(map(v)(g))(f) == map(v)(f compose g)
+        ```
+        in other words
+        ```
+        map2(unit(()), fa)((_,a) => a) == fa
+        map2(fa, unit(()))((a,_) => a) == fa     
+        ```
+    * associativity (in terms of product)
+         * `def product[A,B](fa: F[A], fb: F[B]): F[(A,B)] = map2(fa, fb)((_,_))`
+         * `def assoc[A,B,C](p: (A,(B,C))): ((A,B), C) = p match { case (a, (b, c)) => ((a,b), c) }`
+         * product(product(fa,fb),fc) == map(product(fa, product(fb,fc)))(assoc)
+                
 ## appendix
 * higher kinded type
 
