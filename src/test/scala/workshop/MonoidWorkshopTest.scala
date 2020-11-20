@@ -1,7 +1,9 @@
 package workshop
 
+import org.scalatest.Ignore
 import structures.Monoid
 
+@Ignore
 class MonoidWorkshopTest extends org.scalatest.FunSuite with org.scalatest.matchers.should.Matchers {
 
   val subject = MonoidWorkshop

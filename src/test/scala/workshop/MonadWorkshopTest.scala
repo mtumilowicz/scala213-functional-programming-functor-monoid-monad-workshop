@@ -1,5 +1,8 @@
 package workshop
 
+import org.scalatest.Ignore
+
+@Ignore
 class MonadWorkshopTest extends org.scalatest.FunSuite with org.scalatest.matchers.should.Matchers {
 
   val subject = MonadWorkshop
