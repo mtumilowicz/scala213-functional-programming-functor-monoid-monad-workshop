@@ -11,10 +11,31 @@
     * https://netvl.github.io/scala-guidelines/type-system/higher-kinded-types.html
     * https://dzone.com/articles/application-type-lambdas-scala-0
 
+
+## preface
+* goals of this workshop
+    * introduction to scala features:
+        * for-comprehension
+        * higher kinded types
+    * developing basic intuitions concerning standard functional structures
+        * monoid
+        * functor and applicative functor
+        * monad
+    * show fundamental differences between above constructs
+    * apply knowledge to real life
+        * functional approach to validation
+        * functional approach to IO
 * workshops order
+    1. `ForComprehensionWorkshop`
+    1. `MonoidWorkshop`
+    1. `FunctorWorkshop`
+    1. `ApplicativeWorkshop`
+    1. `PersonValidatorWorkshop`
+    1. `MonadWorkshop`
+    1. `EchoWorkshop`
     
 ## introduction    
-* whenever we create an abstraction like Functor
+* whenever we create an abstraction like Functor we should
     * consider abstract methods it should have
     * and laws we expect to hold for the implementations
         * of course Scala won’t enforce any of these laws
@@ -30,9 +51,9 @@
             * unzip `List[(A, B)]` into `List[A]`, `List[B]`
                 * same length
                 * corresponding elements in the same order
-            * we could write a generic unzip function that works for any functor
-            * this kind of algebraic reasoning can potentially save us a lot of work, since 
+            * algebraic reasoning can potentially save us a lot of work, since 
             we don’t have to write separate tests for these properties
+                * we could write a generic unzip function that works for any functor
       
 ## monoids
 * monoid consists of the following:
@@ -73,7 +94,7 @@
     ```
     foldRight(monoid.zero)(monoid.op)
     ```
-    foldLeft and foldRight gives the same results when folding with monoid (associativity) 
+    `foldLeft` and `foldRight` gives the same results when folding with monoid (associativity) 
 * parallelism
     * below three operations give the same result
         ```
@@ -86,23 +107,73 @@
         op(op(a, b), op(c, d)) -> op(op(op(a, b), c), d)
         ```
 * monoids compose
-    * consequence: A, B monoids -> (A, B) is also a monoid
+    * example: A, B monoids -> (A, B) is also a monoid
 
 # functors
-* code
+* definition
+    * we say that a type constructor `F` is a functor, and the `Functor[F]` instance constitutes proof 
+    that `F` is in fact a functor
     ```
     trait Functor[F[_]] {
       def map[A, B](fa: F[A])(f: A => B): F[B]
     }
     ```
-* we say that a type constructor F is a functor, and the Functor[F] instance constitutes proof 
-that F is in fact a functor
 * must obey two laws:
     * `fa.map(f).map(g) = fa.map(f.andThen(g))`
     * `fa.map(x => x) = fa`
 * functors compose: https://github.com/mtumilowicz/scala212-cats-category-theory-composing-functors
-* ref
-    * https://github.com/mtumilowicz/java11-category-theory-optional-is-not-functor
+* for more formal reasoning, please refer: https://github.com/mtumilowicz/java11-category-theory-optional-is-not-functor
+
+## applicative functors
+* definition
+    ```
+    trait Applicative[F[_]] {
+    
+      def unit[A](a: => A): F[A]
+    
+      def map2[A, B, C](fa: F[A], fb: F[B])(f: (A, B) => C): F[C]
+    }
+    ```
+    * could be formulated using `unit` and `apply` (therefore called Applicative), rather than 
+    `unit` and `map2`
+        * `def apply[A,B](fab: F[A => B])(fa: F[A]): F[B]`
+* all applicatives are functors
+* advantages
+    * preferable to implement combinators using as few assumptions as possible
+        * it’s better to assume that a data type can provide `map2` than `flatMap`
+        * otherwise we’d have to write a new traverse every time we encountered 
+        a type that’s Applicative but not a Monad 
+* validation context
+    * for a concrete example, think of validating a web form submission
+        * only reporting the first error means the user would have to repeatedly submit 
+        the form and fix one error at a time
+        * consider what happens in a sequence of `flatMap` calls like the following
+            ```
+            validName(field1) flatMap (f1 =>
+                validBirthdate(field2) flatMap (f2 =>
+                    validPhone(field3) map (f3 => ValidInput(f1, f2, f3))
+            ```
+            * if `validName` fails with an error, then `validBirthdate` and `validPhone` won’t even run 
+        * now think of doing the same thing with `map3`
+            ```
+            map3(validName(field1), validBirthdate(field2), validPhone(field3))(ValidInput(_,_,_))
+            ```
+            * no dependency implied between the three expressions
+* The applicative laws
+    * left and right identity
+        ```
+        map(v)(id) == v
+        map(map(v)(g))(f) == map(v)(f compose g)
+        ```
+        in other words
+        ```
+        map2(unit(()), fa)((_,a) => a) == fa
+        map2(fa, unit(()))((a,_) => a) == fa     
+        ```
+    * associativity (in terms of product)
+         * `def product[A,B](fa: F[A], fb: F[B]): F[(A,B)] = map2(fa, fb)((_,_))`
+         * `def assoc[A,B,C](p: (A,(B,C))): ((A,B), C) = p match { case (a, (b, c)) => ((a,b), c) }`
+         * product(product(fa,fb),fc) == map(product(fa, product(fb,fc)))(assoc)
 
 # monads
 * map can be implemented in terms of `flatMap` and `unit`
@@ -217,13 +288,8 @@ that assign to variables
         * we can store them in lists, pass them to functions, create them dynamically, and so on
     * many IO programs will overflow the runtime call stack and throw a StackOverflowError
 * unlike Functors and Applicatives, not all Monads compose
-
-## applicative functors
-* Applicative interface could be formulated using unit and the function apply, rather than
-  unit and map2
-    * `def apply[A,B](fab: F[A => B])(fa: F[A]): F[B]`
-* all applicatives are functors
 * all monads are applicatives
+    * not all applicative functors are monads
     * difference between monads and applicatives
         * applicative constructs context-free computations, while Monad allows for context sensitivity
         * `join` and `flatMap` can’t be implemented with just `map2` and `unit`
@@ -249,44 +315,7 @@ that assign to variables
                 .flatMap { id => departments.get(id) }
             }
             ```
-* advantages
-    * preferable to implement combinators using as few assumptions as possible
-        * it’s better to assume that a data type can provide `map2` than `flatMap`
-        * otherwise we’d have to write a new traverse every time we encountered 
-        a type that’s Applicative but not a Monad 
-* not all applicative functors are monads
-* validation context
-    * for a concrete example, think of validating a web form submission
-        * only reporting the first error means the user would have to repeatedly submit 
-        the form and fix one error at a time
-        * consider what happens in a sequence of `flatMap` calls like the following
-            ```
-            validName(field1) flatMap (f1 =>
-                validBirthdate(field2) flatMap (f2 =>
-                    validPhone(field3) map (f3 => ValidInput(f1, f2, f3))
-            ```
-            * if `validName` fails with an error, then `validBirthdate` and `validPhone` won’t even run 
-        * now think of doing the same thing with `map3`
-            ```
-            map3(validName(field1), validBirthdate(field2), validPhone(field3))(ValidInput(_,_,_))
-            ```
-            * no dependency implied between the three expressions
-* The applicative laws
-    * left and right identity
-        ```
-        map(v)(id) == v
-        map(map(v)(g))(f) == map(v)(f compose g)
-        ```
-        in other words
-        ```
-        map2(unit(()), fa)((_,a) => a) == fa
-        map2(fa, unit(()))((a,_) => a) == fa     
-        ```
-    * associativity (in terms of product)
-         * `def product[A,B](fa: F[A], fb: F[B]): F[(A,B)] = map2(fa, fb)((_,_))`
-         * `def assoc[A,B,C](p: (A,(B,C))): ((A,B), C) = p match { case (a, (b, c)) => ((a,b), c) }`
-         * product(product(fa,fb),fc) == map(product(fa, product(fb,fc)))(assoc)
-                
+             
 ## appendix
 * higher kinded type
     * represent an ability to abstract over type constructors
