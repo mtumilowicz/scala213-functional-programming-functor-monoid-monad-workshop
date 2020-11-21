@@ -12,18 +12,6 @@ trait Applicative[F[_]] {
   def unit[A](a: => A): F[A]
 
   def map2[A, B, C](fa: F[A], fb: F[B])(f: (A, B) => C): F[C]
-
-  def apply[A, B](fab: F[A => B])(fa: F[A]): F[B] =
-    map2(fab, fa)((f, a) => f(a))
-
-  def map[A, B](fa: F[A])(f: A => B): F[B] =
-    map2(fa, unit(()))((a, _) => f(a))
-
-  def traverse[A, B](as: List[A])(f: A => F[B]): F[List[B]] =
-    as.foldRight(unit(List[B]()))((a, fbs) => map2(f(a), fbs)(_ :: _))
-
-  def sequence[A](lfa: List[F[A]]): F[List[A]] =
-    traverse(lfa)(fa => fa)
 }
 
 object Applicative {
@@ -40,5 +28,27 @@ object Applicative {
           case (_, e@Failure(_, _)) => e
         }
     }
+
+  def listApplicative(): Applicative[List] = new Applicative[List] {
+    override def unit[A](a: => A): List[A] = List(a)
+
+    override def map2[A, B, C](fa: List[A], fb: List[B])(f: (A, B) => C): List[C] = {
+      for {
+        a <- fa
+        b <- fb
+      } yield f(a, b)
+    }
+  }
+
+  def optionApplicative(): Applicative[Option] = new Applicative[Option] {
+    override def unit[A](a: => A): Option[A] = Option(a)
+
+    override def map2[A, B, C](fa: Option[A], fb: Option[B])(f: (A, B) => C): Option[C] = {
+      for {
+        a <- fa
+        b <- fb
+      } yield f(a, b)
+    }
+  }
 
 }
