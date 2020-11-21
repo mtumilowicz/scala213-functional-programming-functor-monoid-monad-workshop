@@ -7,6 +7,7 @@
     * https://docs.scala-lang.org/tutorials/FAQ/yield.html
     * https://www.james-willett.com/scala-map-flatmap-filter/
     * https://miklos-martin.github.io/learn/fp/2016/03/10/monad-laws-for-regular-developers.html
+    * https://typelevel.org/blog/2016/08/21/hkts-moving-forward.html
 
 * workshops order
     
@@ -286,12 +287,37 @@ that assign to variables
                 
 ## appendix
 * higher kinded type
-
+    * represent an ability to abstract over type constructors
+    * same implementation, different type constructors
+        ```
+        def tuple[A, B](as: List[A], bs: List[B]): List[(A, B)] =
+          as.flatMap{a =>
+            bs.map((a, _))}
+            
+        def tuple[A, B](as: Option[A], bs: Option[B]): Option[(A, B)] =
+          as.flatMap{a =>
+            bs.map((a, _))}
+            
+        def tuple[E, A, B](as: Either[E, A], bs: Either[E, B]): Either[E, (A, B)] =
+          as.flatMap{a =>
+            bs.map((a, _))}
+        ```
+        * in programming, when we encounter such great sameness—not merely similar code, 
+        but identical code—we would like the opportunity to parameterize: extract the parts 
+        that are different to arguments, and recycle the common code for all situations
+        * we have a way to pass in implementations; that’s just higher-order functions
+        * we need 'type constructor as argument'
+            ```
+            def tuplef[F[_], A, B](fa: F[A], fb: F[B]): F[(A, B)] = ???      
+            ```
+            * `F[_]` means that `F` may not be a simple type, like `Int` or `String`, but instead 
+            a one-argument type constructor, like `List` or `Option`
+        
 * for comprehension
-    * each line in the expression using the `<-` symbol is translated to a flatMap call, except 
-        * the last line is translated to a concluding `map` call
+    * each line in the expression using the `<-` symbol is translated to a `flatMap` call, except 
+        * the last line (`yield`) - it is translated to a concluding `map` call
         * `x <- c if cond` is translated to `c.filter(x => cond)`
-    * flatMap / map
+    * `flatMap` / `map`
         ```
         for {
           bound <- list
@@ -306,7 +332,7 @@ that assign to variables
           }
         }
         ```
-    * flatMap / map / filter
+    * `flatMap` / `map` / `filter`
         ```
         for {
           sl <- l
