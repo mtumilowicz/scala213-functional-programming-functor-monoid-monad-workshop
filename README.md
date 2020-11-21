@@ -10,7 +10,7 @@
     * https://typelevel.org/blog/2016/08/21/hkts-moving-forward.html
     * https://netvl.github.io/scala-guidelines/type-system/higher-kinded-types.html
     * https://dzone.com/articles/application-type-lambdas-scala-0
-
+    * https://carlo-hamalainen.net/2014/01/02/applicatives-compose-monads-do-not/
 
 ## preface
 * goals of this workshop
@@ -109,7 +109,7 @@
 * monoids compose
     * example: A, B monoids -> (A, B) is also a monoid
 
-# functors
+## functors
 * definition
     * we say that a type constructor `F` is a functor, and the `Functor[F]` instance constitutes proof 
     that `F` is in fact a functor
@@ -137,29 +137,7 @@
     * could be formulated using `unit` and `apply` (therefore called Applicative), rather than 
     `unit` and `map2`
         * `def apply[A,B](fab: F[A => B])(fa: F[A]): F[B]`
-* all applicatives are functors
-* advantages
-    * preferable to implement combinators using as few assumptions as possible
-        * it’s better to assume that a data type can provide `map2` than `flatMap`
-        * otherwise we’d have to write a new traverse every time we encountered 
-        a type that’s Applicative but not a Monad 
-* validation context
-    * for a concrete example, think of validating a web form submission
-        * only reporting the first error means the user would have to repeatedly submit 
-        the form and fix one error at a time
-        * consider what happens in a sequence of `flatMap` calls like the following
-            ```
-            validName(field1) flatMap (f1 =>
-                validBirthdate(field2) flatMap (f2 =>
-                    validPhone(field3) map (f3 => ValidInput(f1, f2, f3))
-            ```
-            * if `validName` fails with an error, then `validBirthdate` and `validPhone` won’t even run 
-        * now think of doing the same thing with `map3`
-            ```
-            map3(validName(field1), validBirthdate(field2), validPhone(field3))(ValidInput(_,_,_))
-            ```
-            * no dependency implied between the three expressions
-* The applicative laws
+* applicative laws
     * left and right identity
         ```
         map(v)(id) == v
@@ -174,40 +152,39 @@
          * `def product[A,B](fa: F[A], fb: F[B]): F[(A,B)] = map2(fa, fb)((_,_))`
          * `def assoc[A,B,C](p: (A,(B,C))): ((A,B), C) = p match { case (a, (b, c)) => ((a,b), c) }`
          * product(product(fa,fb),fc) == map(product(fa, product(fb,fc)))(assoc)
+* all applicatives are functors
+* advantages
+    * preferable to implement combinators using as few assumptions as possible
+        * it’s better to assume that a data type can provide `map2` than `flatMap`
+        * otherwise we’d have to write a new `traverse` every time we encountered 
+        a type that’s Applicative but not a Monad 
+* validation context
+    * only reporting the first error means the user would have to repeatedly submit 
+    the form and fix one error at a time
+    * consider what happens in a sequence of `flatMap` calls like the following
+        ```
+        validName(field1) flatMap (f1 =>
+            validBirthdate(field2) flatMap (f2 =>
+                validPhone(field3) map (f3 => ValidInput(f1, f2, f3))
+        ```
+        * if `validName` fails with an error, then `validBirthdate` and `validPhone` won’t even run 
+    * now think of doing the same thing with `map3`
+        ```
+        map3(validName(field1), validBirthdate(field2), validPhone(field3))(ValidInput(_,_,_))
+        ```
+        * no dependency implied between the three expressions
 
-# monads
-* map can be implemented in terms of `flatMap` and `unit`
+## monads
+* definition
     ```
-    def unit[A](a: => A): F[A]
-    def map[A,B](f: A => B): Gen[B] = flatMap(a => unit(f(a)))
+    trait Monad[F[_]] {
+    
+      def unit[A](a: => A): F[A]
+    
+      def flatMap[A, B](ma: F[A])(f: A => F[B]): F[B]
+    
+    }
     ```
-* they all have unit and flatMap , and each monad brings its own set of additional primitive 
-operations that are specific to it
-* you may be used to thinking of interfaces as providing a relatively complete API for an abstract 
-data type, merely abstracting over the specific representation
-    * example: List - LinkedList, ArrayList
-* monad doesn’t generalize one type or another - rather many vastly different data types can satisfy the 
-Monad interface and laws
-    * Monad, like Monoid, is an abstract, purely algebraic interface
-* monad is an implementation of one of the minimal sets of primitive combinators
-satisfying the monad laws
-* combinator sets
-    * unit and flatMap
-        ```
-        def unit[A](a: => A): F[A]
-        def flatMap[A, B](ma: F[A])(f: A => F[B]): F[B]
-        ```
-    * unit and compose
-        ```
-        def unit[A](a: => A): F[A]
-        def compose[A,B,C](f: A => F[B], g: B => F[C]): A => F[C]
-        ```
-    * unit, map and join
-        ```
-        def unit[A](a: => A): F[A]
-        def map[A, B](fa: F[A])(f: A => B): F[B]
-        def join[A](mma: F[F[A]]): F[A]      
-        ```
 * monad laws
     * left identity and right identity
         ```
@@ -228,11 +205,38 @@ satisfying the monad laws
         option.flatMap(f).flatMap(g) == option.flatMap(f(_).flatMap(g))
         ```
         * similar to associative law for monoids
-* chain of flatMap calls is like an imperative program with statements 
+* monad is an implementation of one of the minimal sets of primitive combinators
+satisfying the monad laws
+    * combinator sets
+        * unit and flatMap
+            ```
+            def unit[A](a: => A): F[A]
+            def flatMap[A, B](ma: F[A])(f: A => F[B]): F[B]
+            ```
+        * unit and compose
+            ```
+            def unit[A](a: => A): F[A]
+            def compose[A,B,C](f: A => F[B], g: B => F[C]): A => F[C]
+            ```
+        * unit, map and join
+            ```
+            def unit[A](a: => A): F[A]
+            def map[A, B](fa: F[A])(f: A => B): F[B]
+            def join[A](mma: F[F[A]]): F[A]      
+            ```
+* each monad brings its own set of additional primitive operations that are specific to it
+    * example: `Option`, `Either`, `List`
+* vs interfaces
+    * interfaces ~ relatively complete API for an abstract data type
+        * merely abstracting over the specific representation
+        * example: List - LinkedList, ArrayList
+    * monad ~ many vastly different data types can satisfy the Monad interface and laws
+        * like Monoid, is an abstract, purely algebraic interface
+* chain of `flatMap` calls is like an imperative program with statements 
 that assign to variables
     * monad specifies what occurs at statement boundaries
     * example
-        * Option monad - may return None at some point and effectively terminate the processing
+        * `Option` monad - may return None at some point and effectively terminate the processing
     * example: identity monad
         ```
         case class Id[A](value: A) {
@@ -245,55 +249,22 @@ that assign to variables
         val id = Identity("Hello, ")
           .flatMap(a => Identity("monad!")
           .flatMap(b => Identity(a + b)))
-          
-        val id2 = for {
-          a <- Identity("Hello, ")
-          b <- Identity("monad!")
-        } yield a + b
-      
-      
-        val a = "Hello, "
-        val b = "monad!"
-        val ab = a + b
       
         // id = Identity(Hello, monad!)
-        // id2 = Identity(Hello, monad!)
-        // ab = "Hello, monad!"
         ```
         * simply variable substitution
         * monads provide a context for introducing and binding variables, and performing 
         variable substitution
-* IO context
-    ```
-    sealed trait IO[A] {
-      self => //  lets us refer to this object inside closures
-      def run: A
-    
-      def map[B](f: A => B): IO[B] =
-        new IO[B] {
-          def run: B = f(self.run)
-        }
-    
-      def flatMap[B](f: A => IO[B]): IO[B] =
-        new IO[B] {
-          def run: B = f(self.run).run
-        }
-    }
-    ```
-    * is a kind of least common denominator for expressing programs with external effects
-    * clearly separates pure code from impure code, forcing us to be honest about where 
-    interactions with the outside world are occurring
-        * referentially transparent description of a computation with effects
-    * IO computations are ordinary values
-        * we can store them in lists, pass them to functions, create them dynamically, and so on
-    * many IO programs will overflow the runtime call stack and throw a StackOverflowError
 * unlike Functors and Applicatives, not all Monads compose
+    * to show that "monads do not compose", it is sufficient to find a counterexample, namely two monads 
+    `f` and `g` such that `f g` is not a monad
+    * proof: https://carlo-hamalainen.net/2014/01/02/applicatives-compose-monads-do-not/
 * all monads are applicatives
-    * not all applicative functors are monads
+    * not all applicatives are monads
     * difference between monads and applicatives
         * applicative constructs context-free computations, while Monad allows for context sensitivity
         * `join` and `flatMap` can’t be implemented with just `map2` and `unit`
-            * `def join[A](f: F[F[A]]): F[A] // "removes a layer" of F`
+            * `def join[A](f: F[F[A]]): F[A] // removes a layer of F`
             * `unit` function only lets us add an `F` layer
             * `map2` lets us apply a function within `F` but does no flattening of layers
     * `Option` applicative versus the `Option` monad
@@ -315,75 +286,95 @@ that assign to variables
                 .flatMap { id => departments.get(id) }
             }
             ```
+### IO context
+```
+sealed trait IO[A] {
+  self => //  lets us refer to this object inside closures
+  def run: A
+
+  def map[B](f: A => B): IO[B] =
+    new IO[B] {
+      def run: B = f(self.run)
+    }
+
+  def flatMap[B](f: A => IO[B]): IO[B] =
+    new IO[B] {
+      def run: B = f(self.run).run
+    }
+}
+```
+* is a kind of least common denominator for expressing programs with external effects
+* clearly separates pure code from impure code, forcing us to be honest about where 
+interactions with the outside world are occurring
+    * referentially transparent description of a computation with effects
+* IO computations are ordinary values
+    * we can store them in lists, pass them to functions, create them dynamically, and so on
+* many IO programs will overflow the runtime call stack and throw a `StackOverflowError`
              
 ## appendix
-* higher kinded type
-    * represent an ability to abstract over type constructors
-    * same implementation, different type constructors
+### higher kinded type
+* represent an ability to abstract over type constructors
+* suppose we have same implementations, different type constructors
+    ```
+    def tuple[A, B](as: List[A], bs: List[B]): List[(A, B)] =
+      as.flatMap{a =>
+        bs.map((a, _))}
+        
+    def tuple[A, B](as: Option[A], bs: Option[B]): Option[(A, B)] =
+      as.flatMap{a =>
+        bs.map((a, _))}
+        
+    def tuple[E, A, B](as: Either[E, A], bs: Either[E, B]): Either[E, (A, B)] =
+      as.flatMap{a =>
+        bs.map((a, _))}
+    ```
+    * in programming, when we encounter such great sameness—not merely similar code, 
+    but identical code—we would like the opportunity to parameterize: extract the parts 
+    that are different to arguments, and recycle the common code for all situations
+    * we have a way to pass in implementations; that’s just higher-order functions
+    * we need "type constructor as argument"
         ```
-        def tuple[A, B](as: List[A], bs: List[B]): List[(A, B)] =
-          as.flatMap{a =>
-            bs.map((a, _))}
-            
-        def tuple[A, B](as: Option[A], bs: Option[B]): Option[(A, B)] =
-          as.flatMap{a =>
-            bs.map((a, _))}
-            
-        def tuple[E, A, B](as: Either[E, A], bs: Either[E, B]): Either[E, (A, B)] =
-          as.flatMap{a =>
-            bs.map((a, _))}
+        def tuplef[F[_], A, B](fa: F[A], fb: F[B]): F[(A, B)] = ???      
         ```
-        * we have several such functions: sequence, traverse etc
-        * in programming, when we encounter such great sameness—not merely similar code, 
-        but identical code—we would like the opportunity to parameterize: extract the parts 
-        that are different to arguments, and recycle the common code for all situations
-        * we have a way to pass in implementations; that’s just higher-order functions
-        * we need 'type constructor as argument'
-            ```
-            def tuplef[F[_], A, B](fa: F[A], fb: F[B]): F[(A, B)] = ???      
-            ```
-            * `F[_]` means that `F` may not be a simple type, like `Int` or `String`, but instead 
-            a one-argument type constructor, like `List` or `Option`
-    * higher-kinded types are sometimes used in libraries
-        * example: standard Scala collections
-    * type projections
-        * Scala doesn’t allow us to use underscore syntax to simply say `State[Int, _]` to create 
-        an anonymous type constructor like we create anonymous functions
+        * `F[_]` means that `F` may not be a simple type, like `Int` or `String`, but instead 
+        a one-argument type constructor, like `List` or `Option`
+* higher-kinded types are sometimes used in libraries
+    * example: standard Scala collections
+* Scala doesn’t allow us to use underscore syntax to simply say `State[Int, _]` to create 
+an anonymous type constructor like we create anonymous functions
+    * we have to go through type projections
         * `({type L[a] = Map[K, a]})#L`
             * declares an anonymous type
-                ```
-                {type L[a] = Map[K, a]}
-                ```
-            * we’re then accessing its IntState member with the # syntax
-        * type constructor declared inline like this is often called a type lambda in Scala
-        * removed in Scala 3
-* for comprehension
-    * each line in the expression using the `<-` symbol is translated to a `flatMap` call, except 
-        * the last line (`yield`) - it is translated to a concluding `map` call
-        * `x <- c if cond` is translated to `c.filter(x => cond)`
-    * `flatMap` / `map`
-        ```
-        for {
-          bound <- list
-          out <- f(bound)
-        } yield out
-      
-        // is equivalent to
-      
-        list.flatMap { bound =>
-          f(bound).map { out =>
-            out
-          }
-        }
-        ```
-    * `flatMap` / `map` / `filter`
-        ```
-        for {
-          sl <- l
-          el <- sl if el > 0
-        } yield el.toString.length
-      
-        // is equivalent to
-      
-        l.flatMap(sl => sl.filter(el => el > 0).map(el => el.toString.length))
-        ```
+            * then access its `L` member with the `#` syntax
+            * type constructor declared inline like this is often called a type lambda in Scala
+    * removed in Scala 3
+### for comprehension
+* each line in the expression using the `<-` is translated to a `flatMap` call, except 
+    * the last line (`yield`) - it is translated to a concluding `map` call
+    * `x <- c if cond` is translated to `c.filter(x => cond)`
+* `flatMap` / `map`
+    ```
+    for {
+      bound <- list
+      out <- f(bound)
+    } yield out
+  
+    // is equivalent to
+  
+    list.flatMap { bound =>
+      f(bound).map { out =>
+        out
+      }
+    }
+    ```
+* `flatMap` / `map` / `filter`
+    ```
+    for {
+      sl <- l
+      el <- sl if el > 0
+    } yield el.toString.length
+  
+    // is equivalent to
+  
+    l.flatMap(sl => sl.filter(el => el > 0).map(el => el.toString.length))
+    ```
