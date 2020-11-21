@@ -8,6 +8,8 @@
     * https://www.james-willett.com/scala-map-flatmap-filter/
     * https://miklos-martin.github.io/learn/fp/2016/03/10/monad-laws-for-regular-developers.html
     * https://typelevel.org/blog/2016/08/21/hkts-moving-forward.html
+    * https://netvl.github.io/scala-guidelines/type-system/higher-kinded-types.html
+    * https://dzone.com/articles/application-type-lambdas-scala-0
 
 * workshops order
     
@@ -302,6 +304,7 @@ that assign to variables
           as.flatMap{a =>
             bs.map((a, _))}
         ```
+        * we have several such functions: sequence, traverse etc
         * in programming, when we encounter such great sameness—not merely similar code, 
         but identical code—we would like the opportunity to parameterize: extract the parts 
         that are different to arguments, and recycle the common code for all situations
@@ -312,7 +315,19 @@ that assign to variables
             ```
             * `F[_]` means that `F` may not be a simple type, like `Int` or `String`, but instead 
             a one-argument type constructor, like `List` or `Option`
-        
+    * higher-kinded types are sometimes used in libraries
+        * example: standard Scala collections
+    * type projections
+        * Scala doesn’t allow us to use underscore syntax to simply say `State[Int, _]` to create 
+        an anonymous type constructor like we create anonymous functions
+        * `({type L[a] = Map[K, a]})#L`
+            * declares an anonymous type
+                ```
+                {type L[a] = Map[K, a]}
+                ```
+            * we’re then accessing its IntState member with the # syntax
+        * type constructor declared inline like this is often called a type lambda in Scala
+        * removed in Scala 3
 * for comprehension
     * each line in the expression using the `<-` symbol is translated to a `flatMap` call, except 
         * the last line (`yield`) - it is translated to a concluding `map` call
