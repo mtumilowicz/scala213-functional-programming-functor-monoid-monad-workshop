@@ -14,6 +14,8 @@
     * https://netvl.github.io/scala-guidelines/type-system/higher-kinded-types.html
     * https://dzone.com/articles/application-type-lambdas-scala-0
     * https://carlo-hamalainen.net/2014/01/02/applicatives-compose-monads-do-not/
+    * [Scala with Cats Book - Noel Welsh](https://underscore.io/books/scala-with-cats/)
+    * [Functional Programming in Scala - Paul Chiusano](https://www.manning.com/books/functional-programming-in-scala)
 
 ## preface
 * goals of this workshop
@@ -189,10 +191,15 @@
     }
     ```
 * monad laws
+    * given compose function
+        ```
+        def compose[A,B,C](f: A => F[B], g: B => F[C]): A => F[C] =
+            a => flatMap(f(a))(g)
+        ```
     * left identity and right identity
         ```
-        compose(f, unit) == f
-        compose(unit, f) == f
+        compose(f, unit) == f // m.flatMap(unit) == m
+        compose(unit, f) == f // unit(a).flatMap(func) == func(a)
       
         // example for option
         option.flatMap(Some(_)) == option
