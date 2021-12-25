@@ -26,11 +26,14 @@ trait IO2[+A] { self =>
 
   @tailrec
   private def unsafeRunSync[B](io: IO2[B]): B = io match {
-    case Succeed(thunk) => thunk()
+    case Succeed(value) => value
+    case Effect(f) => f()
     case FlatMap(x, f) =>
-      val ff = fix(f)
-      x match {
-        case Succeed(r) => unsafeRunSync(ff(r()))
+      val ff = fix(f) // bug in IntelliJ compiler: https://youtrack.jetbrains.com/issue/SCL-13746
+      val xx = x.asInstanceOf[IO2[B]] // bug in IntelliJ compiler: https://youtrack.jetbrains.com/issue/SCL-13746
+      xx match {
+        case Succeed(value) => value
+        case Effect(thunk) => unsafeRunSync(ff(thunk()))
         case FlatMap(y, g) =>
           val gg = fix(g)
           unsafeRunSync(y flatMap (a => gg(a) flatMap ff))
@@ -38,14 +41,16 @@ trait IO2[+A] { self =>
   }
 }
 
-case class Succeed[A](thunk: () => A) extends IO2[A]
+case class Succeed[A](value: A) extends IO2[A]
+
+case class Effect[A](f: () => A) extends IO2[A]
 
 case class FlatMap[A, B](io: IO2[A], continuation: A => IO2[B]) extends IO2[B]
 
 object IO2 {
 
   def succeed[A](a: => A): IO2[A] =
-    Succeed(() => a)
+    Effect(() => a)
 
   /**
    * https://youtrack.jetbrains.com/issue/SCL-13746
