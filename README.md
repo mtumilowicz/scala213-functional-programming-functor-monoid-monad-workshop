@@ -373,7 +373,7 @@ an anonymous type constructor like we create anonymous functions
       out <- f(bound)
     } yield out
   
-    // is equivalent to
+    // is equivalent to (could be desugared with IntelliJ)
   
     list.flatMap { bound =>
       f(bound).map { out =>
