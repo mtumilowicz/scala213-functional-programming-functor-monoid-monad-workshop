@@ -28,15 +28,14 @@ trait IO2[+A] { self =>
   private def unsafeRunSync[B](io: IO2[B]): B = io match {
     case Succeed(value) => value
     case Effect(f) => f()
-    case FlatMap(x, f) =>
+    case FlatMap(prevIo, f) =>
       val ff = fix(f) // bug in IntelliJ compiler: https://youtrack.jetbrains.com/issue/SCL-13746
-      val xx = x.asInstanceOf[IO2[B]] // bug in IntelliJ compiler: https://youtrack.jetbrains.com/issue/SCL-13746
-      xx match {
-        case Succeed(value) => value
+      prevIo match {
+        case Succeed(value) => unsafeRunSync(ff(value))
         case Effect(thunk) => unsafeRunSync(ff(thunk()))
-        case FlatMap(y, g) =>
+        case FlatMap(prevPrevIo, g) =>
           val gg = fix(g)
-          unsafeRunSync(y flatMap (a => gg(a) flatMap ff))
+          unsafeRunSync(prevPrevIo flatMap (a => gg(a) flatMap ff))
       }
   }
 }
