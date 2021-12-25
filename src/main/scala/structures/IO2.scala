@@ -26,12 +26,10 @@ trait IO2[+A] { self =>
 
   @tailrec
   private def unsafeRunSync[B](io: IO2[B]): B = io match {
-    case SucceedNow(a) => a
     case Succeed(thunk) => thunk()
     case FlatMap(x, f) =>
       val ff = fix(f)
       x match {
-        case SucceedNow(a) => unsafeRunSync(ff(a))
         case Succeed(r) => unsafeRunSync(ff(r()))
         case FlatMap(y, g) =>
           val gg = fix(g)
@@ -40,16 +38,11 @@ trait IO2[+A] { self =>
   }
 }
 
-case class SucceedNow[A](a: A) extends IO2[A]
-
 case class Succeed[A](thunk: () => A) extends IO2[A]
 
 case class FlatMap[A, B](io: IO2[A], continuation: A => IO2[B]) extends IO2[B]
 
 object IO2 {
-
-  def succeedNow[A](a: A): IO2[A] =
-    SucceedNow(a)
 
   def succeed[A](a: => A): IO2[A] =
     Succeed(() => a)

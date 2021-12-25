@@ -12,7 +12,7 @@ object Console2 {
   }
 }
 
-object EchoAnswers2 extends IO2App {
+object IO2Answers extends IO2App {
 
   def fahrenheitToCelsius(f: Double): Double =
     (f - 32) * 5.0 / 9.0
