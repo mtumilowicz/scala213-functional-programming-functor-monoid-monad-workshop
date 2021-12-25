@@ -14,8 +14,11 @@
     * https://netvl.github.io/scala-guidelines/type-system/higher-kinded-types.html
     * https://dzone.com/articles/application-type-lambdas-scala-0
     * https://carlo-hamalainen.net/2014/01/02/applicatives-compose-monads-do-not/
+    * https://github.com/kitlangton/zio-from-scatch
     * [Scala with Cats Book - Noel Welsh](https://underscore.io/books/scala-with-cats/)
     * [Functional Programming in Scala - Paul Chiusano](https://www.manning.com/books/functional-programming-in-scala)
+    * [ZIO from Scratch — Part 1](https://www.youtube.com/watch?v=wsTIcHxJMeQ)
+    * [ZIO from Scratch — Part 2](https://www.youtube.com/watch?v=g8Tuqldu2AE)
 
 ## preface
 * goals of this workshop
@@ -300,7 +303,7 @@ that assign to variables
 ```
 sealed trait IO[A] {
   self => //  lets us refer to this object inside closures
-  def run: A
+  def unsafeRunSync: A
 
   def map[B](f: A => B): IO[B] =
     new IO[B] {
@@ -319,7 +322,8 @@ interactions with the outside world are occurring
     * referentially transparent description of a computation with effects
 * IO computations are ordinary values
     * we can store them in lists, pass them to functions, create them dynamically, and so on
-* many IO programs will overflow the runtime call stack and throw a `StackOverflowError`
+* given `IO[A]` will overflow the runtime call stack and throw a `StackOverflowError`
+    * solution: encapsulate operations into dedicated case classes and use tail recursion for evaluation
              
 ## appendix
 ### higher kinded type
