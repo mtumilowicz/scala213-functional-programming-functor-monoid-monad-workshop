@@ -324,6 +324,7 @@ interactions with the outside world are occurring
     * we can store them in lists, pass them to functions, create them dynamically, and so on
 * given `IO[A]` will overflow the runtime call stack and throw a `StackOverflowError`
     * solution: encapsulate operations into dedicated case classes and use tail recursion for evaluation
+        * `io.flatMap(f).flatMap(g) = io.flatMap(v => f(v) flatMap g)`
              
 ## appendix
 ### higher kinded type
