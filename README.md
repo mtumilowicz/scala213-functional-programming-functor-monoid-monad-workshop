@@ -16,6 +16,7 @@
     * https://carlo-hamalainen.net/2014/01/02/applicatives-compose-monads-do-not/
     * https://github.com/kitlangton/zio-from-scatch
     * https://www.manning.com/books/functional-programming-in-scala-second-edition
+    * https://github.com/fpinscala/fpinscala/wiki
     * [Scala with Cats Book - Noel Welsh](https://underscore.io/books/scala-with-cats/)
     * [Functional Programming in Scala - Paul Chiusano](https://www.manning.com/books/functional-programming-in-scala)
     * [ZIO from Scratch — Part 1](https://www.youtube.com/watch?v=wsTIcHxJMeQ)
@@ -83,6 +84,7 @@
             ```
             exists zero: A, that combine(x, zero) == x and combine(zero, x) == x for any x: A
             ```
+    * is a type A and an implementation of `Monoid[A]` that satisfies the laws
 * example
     * string monoid
         ```
@@ -91,6 +93,18 @@
             val zero = ""
         }
         ```
+    * various Monoid instances don’t have much to do with each other
+        * monoid is a type, together with the monoid operations and a set of laws
+        * you may build some intuition by considering the various concrete instances
+            * but nothing guarantees all monoids you encounter will match your intuition
+    * we can say that
+        * type A forms a monoid
+        * type A is monoidal
+        * less precisely: type A is a monoid or even type A is monoidal
+        * but not: type A has monoid
+            * analogy: the page you’re reading forms a rectangle, is rectangular or it is a rectangle
+            but not: it has a rectangle
+        * in any case, the Monoid[A] instance is simply evidence of this fact
 * folding context
     ```
     def foldRight[B](z: B)(f: (A, B) => B): B
@@ -118,9 +132,16 @@
         combine(x, combine(y, z)) = combine(combine(a, b), combine(c, z))
         so: combine(combine(combine(a, b), c), d) = combine(combine(a, b), combine(c, d))
         ```
-* monoids compose
-    * example: A, B monoids -> (A, B) is also a monoid
-
+* additional properties
+    * monoids compose
+        * example: `A, B monoids -> (A, B) is also a monoid`
+    * monoid homomorphism
+        * when `A, B monoids => A.combine(f(x), f(y)) == f(B.combine(x, y))”
+    * monoid isomorphism
+        * homomorphism in both directions
+        * example: `String` and `List[Char]` monoids with concatenation
+    * commutative combine
+        * when `combine(x, y) == combine(y, x))`
 ## functors
 * definition
     * we say that a type constructor `F` is a functor, and the `Functor[F]` instance constitutes proof 
@@ -203,6 +224,8 @@
         def compose[A,B,C](f: A => F[B], g: B => F[C]): A => F[C] =
             a => flatMap(f(a))(g)
         ```
+        * digression
+            * functions like that: `A => F[B]` are called Kleisli arrows
     * left identity and right identity
         ```
         compose(f, unit) == f // m.flatMap(unit) == m
@@ -263,13 +286,26 @@ that assign to variables
         }
         ```
         ```
-        val id = Identity("Hello, ")
-          .flatMap(a => Identity("monad!")
-          .flatMap(b => Identity(a + b)))
+        val id = Id("Hello, ")
+          .flatMap(a => Id("monad!")
+          .flatMap(b => Id(a + b)))
       
-        // id = Identity(Hello, monad!)
+        // id = Id(Hello, monad!)
         ```
         * simply variable substitution
+            ```
+            for {
+                a <- Id("Hello, ")
+                b <- Id("monad!")
+            } yield a + b
+            ```
+            vs
+            ```
+            val a = "Hello, "
+            val b = "monad!"
+            val c = a + b
+            ```
+            * variables `a` and `b` get bound to `"Hello, "` and `"monad!”`
         * monads provide a context for introducing and binding variables, and performing 
         variable substitution
 * unlike Functors and Applicatives, not all Monads compose
@@ -302,6 +338,17 @@ that assign to variables
             val o: Option[String] = idsByName.get("Bob")
                 .flatMap { id => departments.get(id) }
             }
+            ```
+* monad is a monoid in a category of endofunctors
+    * `Monoid[M]` is operating in a category where the objects are Scala types and the arrows are Scala functions
+    * `Monad[F]` is operating in a category where the objects are Scala functors and the arrows are natural transformations
+        * notice that `unit` and `compose` are minimal set of primitives
+* additional properties
+    * each monad brings its own set of additional primitive operations that are specific to it
+        * example: `State[S, A]`
+            ```
+            def get[S]: State[S, S]
+            def set[S](s: => S): State[S, Unit]
             ```
 ### IO context
 ```
