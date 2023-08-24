@@ -11,9 +11,9 @@ class MonoidAnswersTest extends org.scalatest.FunSuite with org.scalatest.matche
     def listConcat[A] = subject.listConcat[A]
 
     // expect
-    listConcat.op(List("a"), List("b")) shouldBe List("a", "b")
-    listConcat.op(listConcat.zero, List("b")) shouldBe List("b")
-    listConcat.op(List("a"), listConcat.zero) shouldBe List("a")
+    listConcat.combine(List("a"), List("b")) shouldBe List("a", "b")
+    listConcat.combine(listConcat.zero, List("b")) shouldBe List("b")
+    listConcat.combine(List("a"), listConcat.zero) shouldBe List("a")
     listConcat.zero shouldBe Nil
   }
 
@@ -22,9 +22,9 @@ class MonoidAnswersTest extends org.scalatest.FunSuite with org.scalatest.matche
     def intAddition = subject.intAddition
 
     // expect
-    intAddition.op(2, 3) shouldBe 5
-    intAddition.op(intAddition.zero, 3) shouldBe 3
-    intAddition.op(2, intAddition.zero) shouldBe 2
+    intAddition.combine(2, 3) shouldBe 5
+    intAddition.combine(intAddition.zero, 3) shouldBe 3
+    intAddition.combine(2, intAddition.zero) shouldBe 2
     intAddition.zero shouldBe 0
   }
 
@@ -38,8 +38,8 @@ class MonoidAnswersTest extends org.scalatest.FunSuite with org.scalatest.matche
     def f2: String => Int = _.toInt
 
     // expect
-    functionMonoid.op(f1, f2)("123") should be (3 + 123)
-    functionMonoid.op(f1, f2)("1") should be (1 + 1)
+    functionMonoid.combine(f1, f2)("123") should be (3 + 123)
+    functionMonoid.combine(f1, f2)("1") should be (1 + 1)
   }
 
   test("bagMonoid") {
@@ -52,7 +52,7 @@ class MonoidAnswersTest extends org.scalatest.FunSuite with org.scalatest.matche
     val map2 = Map("a" -> 2, "c" -> 3)
 
     // expect
-    mapMergeMonoid.op(map1, map2) should be (Map("a" -> 3, "b" -> 2, "c" -> 3))
+    mapMergeMonoid.combine(map1, map2) should be (Map("a" -> 3, "b" -> 2, "c" -> 3))
   }
 
 }
