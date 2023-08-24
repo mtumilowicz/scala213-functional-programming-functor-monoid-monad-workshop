@@ -112,7 +112,10 @@
         ```
     * proof (associativity)
         ```
-        op(op(a, b), op(c, d)) -> op(op(op(a, b), c), d)
+        op(op(op(a, b), c), d) = op(op(x, y), z), where x = op(a, b), y = c, z = d
+        op(op(x, y), z) = op(x, op(y, z))
+        op(x, op(y, z)) = op(op(a, b), op(c, z))
+        so: op(op(op(a, b), c), d) = op(op(a, b), op(c, d))
         ```
 * monoids compose
     * example: A, B monoids -> (A, B) is also a monoid
