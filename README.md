@@ -15,6 +15,7 @@
     * https://dzone.com/articles/application-type-lambdas-scala-0
     * https://carlo-hamalainen.net/2014/01/02/applicatives-compose-monads-do-not/
     * https://github.com/kitlangton/zio-from-scatch
+    * https://www.manning.com/books/functional-programming-in-scala-second-edition
     * [Scala with Cats Book - Noel Welsh](https://underscore.io/books/scala-with-cats/)
     * [Functional Programming in Scala - Paul Chiusano](https://www.manning.com/books/functional-programming-in-scala)
     * [ZIO from Scratch — Part 1](https://www.youtube.com/watch?v=wsTIcHxJMeQ)
@@ -68,7 +69,7 @@
     * trait
         ```
         trait Monoid[A] {
-          def op(a1: A, a2: A): A
+          def combine(a1: A, a2: A): A
         
           def zero: A
         }
@@ -76,17 +77,17 @@
     * laws (semigroup with an identity element)
         * associativity
             ```
-            op(op(x,y), z) == op(x, op(y,z)) for any choice of x: A, y: A, z: A
+            combine(combine(x,y), z) == combine(x, combine(y,z)) for any choice of x: A, y: A, z: A
             ```
         * identity
             ```
-            exists zero: A, that op(x, zero) == x and op(zero, x) == x for any x: A
+            exists zero: A, that combine(x, zero) == x and combine(zero, x) == x for any x: A
             ```
 * example
     * string monoid
         ```
         val stringMonoid = new Monoid[String] {
-            def op(a1: String, a2: String) = a1 + a2
+            def combine(a1: String, a2: String) = a1 + a2
             val zero = ""
         }
         ```
@@ -100,22 +101,22 @@
     ```
     monoid fit these argument types like a glove
     ```
-    foldRight(monoid.zero)(monoid.op)
+    foldRight(monoid.zero)(monoid.combine)
     ```
     `foldLeft` and `foldRight` gives the same results when folding with monoid (associativity) 
 * parallelism
     * below three operations give the same result
         ```
-        op(a, op(b, op(c, d)))
-        op(op(op(a, b), c), d)
-        op(op(a, b), op(c, d)) // allows for parallelism
+        combine(a, combine(b, combine(c, d)))
+        combine(combine(combine(a, b), c), d)
+        combine(combine(a, b), combine(c, d)) // allows for parallelism
         ```
     * proof (associativity)
         ```
-        op(op(op(a, b), c), d) = op(op(x, y), z), where x = op(a, b), y = c, z = d
-        op(op(x, y), z) = op(x, op(y, z))
-        op(x, op(y, z)) = op(op(a, b), op(c, z))
-        so: op(op(op(a, b), c), d) = op(op(a, b), op(c, d))
+        combine(combine(combine(a, b), c), d) = combine(combine(x, y), z), where x = combine(a, b), y = c, z = d
+        combine(combine(x, y), z) = combine(x, combine(y, z))
+        combine(x, combine(y, z)) = combine(combine(a, b), combine(c, z))
+        so: combine(combine(combine(a, b), c), d) = combine(combine(a, b), combine(c, d))
         ```
 * monoids compose
     * example: A, B monoids -> (A, B) is also a monoid
