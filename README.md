@@ -142,6 +142,15 @@
         * example: `String` and `List[Char]` monoids with concatenation
     * commutative combine
         * when `combine(x, y) == combine(y, x))`
+* semigroup
+    * semigroup for a type A has an associative combine operation that returns an A given two input A values
+        ```
+        trait Semigroup[A] {
+          def combine(a1: A, a2: A): A
+        }
+        ```
+    * example: `NonEmptyList[A]`
+        * there is no instance `Monoid[NonEmptyList[A]]` - you cannot specify `zero` element
 ## functors
 * definition
     * we say that a type constructor `F` is a functor, and the `Functor[F]` instance constitutes proof 
@@ -185,6 +194,8 @@
          * `def product[A,B](fa: F[A], fb: F[B]): F[(A,B)] = map2(fa, fb)((_,_))`
          * `def assoc[A,B,C](p: (A,(B,C))): ((A,B), C) = p match { case (a, (b, c)) => ((a,b), c) }`
          * product(product(fa,fb),fc) == map(product(fa, product(fb,fc)))(assoc)
+    * naturality law
+        * `fa.map2(fb)((a, b) => (f(a), g(b))) == fa.map(f).product(fb.map(g))`
 * all applicatives are functors
 * advantages
     * preferable to implement combinators using as few assumptions as possible
@@ -206,7 +217,15 @@
         map3(validName(field1), validBirthdate(field2), validPhone(field3))(ValidInput(_,_,_))
         ```
         * no dependency implied between the three expressions
-
+* additional properties
+    * large number of the useful combinators on Monad can be defined using only unit and map2
+        * example
+            ```
+            def map2[B, C](fb: F[B])(f: (A, B) => C): F[C] =
+                fa.flatMap(a => fb.map(b => f(a, b)))
+            ```
+    * applicative functors compose
+        * `F[_]` and `G[_]` are applicative functors => `F[G[_]]` is applicative functor
 ## monads
 * definition
     ```
@@ -312,6 +331,18 @@ that assign to variables
     * to show that "monads do not compose", it is sufficient to find a counterexample, namely two monads 
     `f` and `g` such that `f g` is not a monad
     * proof: https://carlo-hamalainen.net/2014/01/02/applicatives-compose-monads-do-not/
+    * problem
+        * to implement `join` for nested monads `F` and `G`, write something of a type like:
+            ```
+            F[G[F[G[A]]]] => F[G[A]]
+            ```
+        * that can’t be written generally
+        * but if `G` also happens to have a `Traverse` instance
+            ```
+            F[F[G[G[A]]]] => F[G[A]] // use sequence to turn G[F[_]] into F[G[_]], then use join on F then on G
+            ```
+    * problem is often addressed with a custom-written version specifically constructed for composition
+        * example: monad transformers like `OptionT`
 * all monads are applicatives
     * not all applicatives are monads
     * difference between monads and applicatives
@@ -343,6 +374,17 @@ that assign to variables
     * `Monoid[M]` is operating in a category where the objects are Scala types and the arrows are Scala functions
     * `Monad[F]` is operating in a category where the objects are Scala functors and the arrows are natural transformations
         * notice that `unit` and `compose` are minimal set of primitives
+    * overview
+        |             | `zero`/`unit`   | `op`/`join`|
+        --------------|-----------------|------------|
+        | `Monoid[M]` | `1 => M`        | `M² => M`  |
+        | `Monad[F]`  | `1 ~> F`        | `F² ~> F`  |
+        * `~>` is natural transformation
+        * `M²` is `(M, M)`
+        * `F²` is `F[F[A]]`
+        * `1` is
+            * for Monoid: `Unit` type
+            * for Monad: identity functor
 * additional properties
     * each monad brings its own set of additional primitive operations that are specific to it
         * example: `State[S, A]`
@@ -373,9 +415,19 @@ interactions with the outside world are occurring
     * referentially transparent description of a computation with effects
 * IO computations are ordinary values
     * we can store them in lists, pass them to functions, create them dynamically, and so on
+    * example
+        ```
+        def PrintLine(msg: String): IO = new IO {
+          def unsafeRun = println(msg)
+        }
+
+        def contest(p1: Player, p2: Player): IO = // pure function
+          PrintLine(winnerMsg(winner(p1, p2)))
+        ```
 * given `IO[A]` will overflow the runtime call stack and throw a `StackOverflowError`
     * solution: encapsulate operations into dedicated case classes and use tail recursion for evaluation
         * `io.flatMap(f).flatMap(g) = io.flatMap(v => f(v) flatMap g)`
+        * approach called trampoline
              
 ## appendix
 ### higher kinded type
