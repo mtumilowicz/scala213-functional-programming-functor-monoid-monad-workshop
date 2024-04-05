@@ -23,6 +23,7 @@
     * [ZIO from Scratch — Part 2](https://www.youtube.com/watch?v=g8Tuqldu2AE)
     * [Software Transactional Memory](https://www.youtube.com/watch?v=bLfxaHIvHfc)
     * [A Pragmatic Introduction to Category Theory—Daniela Sfregola](https://www.youtube.com/watch?v=Ss149MsZluI)
+    * https://chat.openai.com/
 
 ## preface
 * goals of this workshop
@@ -372,12 +373,19 @@ that assign to variables
                 .flatMap { id => departments.get(id) }
             }
             ```
+* each monad brings its own set of additional primitive operations that are specific to it
+    * example: `State[S, A]`
+        ```
+        def get[S]: State[S, S]
+        def set[S](s: => S): State[S, Unit]
+        ```          
 * monad is a monoid in a category of endofunctors
+    * endofunctor - functor that maps a category to itself
     * let's look for minimal set of combinators for a monad: unit, map and join
         * monoid = unit + join
-        * endofunctors = map
-    * `Monoid[M]` - objects are Scala types and the arrows are Scala functions
-    * `Monad[F]` - objects are Scala functors and the arrows are natural transformations
+        * endofunctor = map
+    * `Monoid[M]` - objects: Scala types, arrows: Scala functions
+    * `Monad[F]` - objects: Scala functors, arrows: natural transformations
     * overview
         |             | `zero`/`unit`   | `op`/`join`|
         --------------|-----------------|------------|
@@ -389,13 +397,7 @@ that assign to variables
         * `1` is
             * for Monoid: `Unit` type
             * for Monad: identity functor
-* additional properties
-    * each monad brings its own set of additional primitive operations that are specific to it
-        * example: `State[S, A]`
-            ```
-            def get[S]: State[S, S]
-            def set[S](s: => S): State[S, Unit]
-            ```
+
 ### IO context
 ```
 sealed trait IO[A] {
