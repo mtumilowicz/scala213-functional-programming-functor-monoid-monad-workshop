@@ -22,6 +22,7 @@
     * [ZIO from Scratch — Part 1](https://www.youtube.com/watch?v=wsTIcHxJMeQ)
     * [ZIO from Scratch — Part 2](https://www.youtube.com/watch?v=g8Tuqldu2AE)
     * [Software Transactional Memory](https://www.youtube.com/watch?v=bLfxaHIvHfc)
+    * [A Pragmatic Introduction to Category Theory—Daniela Sfregola](https://www.youtube.com/watch?v=Ss149MsZluI)
 
 ## preface
 * goals of this workshop
@@ -372,9 +373,11 @@ that assign to variables
             }
             ```
 * monad is a monoid in a category of endofunctors
-    * `Monoid[M]` is operating in a category where the objects are Scala types and the arrows are Scala functions
-    * `Monad[F]` is operating in a category where the objects are Scala functors and the arrows are natural transformations
-        * notice that `unit` and `compose` are minimal set of primitives
+    * let's look for minimal set of combinators for a monad: unit, map and join
+        * monoid = unit + join
+        * endofunctors = map
+    * `Monoid[M]` - objects are Scala types and the arrows are Scala functions
+    * `Monad[F]` - objects are Scala functors and the arrows are natural transformations
     * overview
         |             | `zero`/`unit`   | `op`/`join`|
         --------------|-----------------|------------|
