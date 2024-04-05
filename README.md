@@ -21,6 +21,7 @@
     * [Functional Programming in Scala - Paul Chiusano](https://www.manning.com/books/functional-programming-in-scala)
     * [ZIO from Scratch — Part 1](https://www.youtube.com/watch?v=wsTIcHxJMeQ)
     * [ZIO from Scratch — Part 2](https://www.youtube.com/watch?v=g8Tuqldu2AE)
+    * [Software Transactional Memory](https://www.youtube.com/watch?v=bLfxaHIvHfc)
 
 ## preface
 * goals of this workshop
@@ -409,7 +410,7 @@ sealed trait IO[A] {
     }
 }
 ```
-* is a kind of least common denominator for expressing programs with external effects
+* in short: `IO` is a magic thing that says this function depends on something other than its arguments 
 * clearly separates pure code from impure code, forcing us to be honest about where 
 interactions with the outside world are occurring
     * referentially transparent description of a computation with effects
