@@ -139,7 +139,7 @@
     * monoids compose
         * example: `A, B monoids -> (A, B) is also a monoid`
     * monoid homomorphism
-        * when `A, B monoids => A.combine(f(x), f(y)) == f(B.combine(x, y))”
+        * condition: `A, B monoids => A.combine(f(x), f(y)) == f(B.combine(x, y))`
     * monoid isomorphism
         * homomorphism in both directions
         * example: `String` and `List[Char]` monoids with concatenation
